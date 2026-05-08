@@ -1,0 +1,55 @@
+<?php 
+  $warehouse_products = $this->warehouse_products_model->get_records_by_warehouse_id($warehouse->id);
+
+  $no_of_products     = 0;
+
+  foreach ($warehouse_products as $value) {
+    $no_of_products += $value->quantity;
+  }
+
+?>
+
+<div class="modal-header <?php 
+  if($no_of_products > 0)
+    echo 'warning-header';
+  else
+    echo 'failure-header';
+?>">
+  <h4 class="modal-title">
+     <?php echo $this->lang->line('warehouse_delete');?>
+  </h4>
+  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+  <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <?php 
+    if($no_of_products > 0)
+    {
+      echo 'Warehouse contains product quantity so you can not delete the warehouse.';
+    }
+    else
+    {
+      echo "Are you sure want to delete this Warehouse ?";
+    }
+  ?>
+  
+</div>
+<div class="modal-footer">
+
+  <button type="button" class="btn btn-default" data-dismiss="modal">
+    <?php echo $this->lang->line('btn_modal_close');?>
+  </button>
+  <?php
+    if($no_of_products <= 0)
+    {
+  ?>
+    <form method="POST" name="deleteWarehouseForm" id="deleteWarehouseForm">
+      <input type="hidden" name="id" id="id" value="<?=$warehouse->id?>">
+      <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+      <button type="submit" name="deleteWarehouseSubmit" id="deleteWarehouseSubmit" class="btn btn-danger" value=""><?php echo $this->lang->line('btn_modal_delete');?></button>
+    </form>
+  <?php
+    }
+  ?>
+</div>

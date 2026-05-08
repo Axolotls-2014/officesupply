@@ -1,0 +1,153 @@
+<?php $this->load->view('layout/header');?>
+
+  <div class="wrapper">
+    <div class="content-wrapper">
+      <section class="content-header">
+          <div class="row mb-2">
+            <div class="col-sm-12">
+              <ol class="breadcrumb breadcrumb-custom float-sm-left">
+                <li class="breadcrumb-item"><a href="#"><?=$this->lang->line('home')?></a></li>
+                <li class="breadcrumb-item "><a href="#"><?=$this->lang->line('header_setting')?></a></li>
+                <li class="breadcrumb-item "><a href="<?=base_url('tax')?>"><?=$this->lang->line('tax_header')?></a></li>
+                <li class="breadcrumb-item active"><?=$this->lang->line('tax_edit')?></li>
+              </ol>
+            </div>
+          </div>
+      </section>
+
+      <section class="content">
+        <div class="row">
+          <div class="col-md-12">
+            <form class="form-horizontal" name="editTaxForm" id="editTaxForm" method="post" action="<?php echo base_url('tax/edit');?>">
+              <div class="card card-info">
+                <div class="card-header">
+                  <h3 class="card-title"><?=$this->lang->line('tax_add')?></h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group row">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label"><?=$this->lang->line('tax_name')?><span class="text-danger">*</span></label>
+                    <div class="col-sm-4">
+                      <input type="text" name="tax_name" value="<?=set_value('tax_name',$tax->tax_name) ?>" class="form-control form-control-sm field_validation" id="tax_name" placeholder="<?=$this->lang->line('tax_name')?>"><?=form_error('tax_name', '<div class="text-danger">', '</div>');?>
+                      <span id="err_tax_name" class="error invalid-feedback"><!-- <?=form_error('tax_name');?> --></span>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label"><?=$this->lang->line('tax_sgst')?><span class="text-danger">*</span></label>
+                    <div class="col-sm-4">
+                      <input type="text" name="sgst" value="<?=set_value('sgst',$tax->sgst) ?>" class="form-control form-control-sm field_validation" id="sgst" placeholder="<?=$this->lang->line('tax_sgst')?>"><?=form_error('sgst', '<div class="text-danger">', '</div>');?>
+                      <span id="err_sgst" class="error invalid-feedback"><?=form_error('sgst');?></span>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label"><?=$this->lang->line('tax_cgst')?><span class="text-danger">*</span></label>
+                    <div class="col-sm-4">
+                      <input type="text" name="cgst" value="<?=set_value('cgst',$tax->cgst) ?>" class="form-control form-control-sm field_validation" id="cgst" placeholder="<?=$this->lang->line('tax_cgst')?>"><?=form_error('cgst', '<div class="text-danger">', '</div>');?>
+                      <span id="err_cgst" class="error invalid-feedback"><?=form_error('cgst');?></span>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label"><?=$this->lang->line('tax_igst')?><span class="text-danger">*</span></label>
+                    <div class="col-sm-4">
+                      <input type="text" name="igst" value="<?=set_value('igst',$tax->igst) ?>" class="form-control form-control-sm field_validation" id="igst" placeholder="<?=$this->lang->line('tax_igst')?>"><?=form_error('igst', '<div class="text-danger">', '</div>');?>
+                      <span id="err_igst" class="error invalid-feedback"><?=form_error('igst');?></span>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                     <label for="inputEmail3" class="col-sm-2 col-form-label"><?=$this->lang->line('tax_status')?><span class="text-danger">*</span></label>
+                    <div class="col-sm-4">
+                      <select class="form-control form-control-sm select2bs4 field_validation" name="status" id="status" width="100%">
+
+                        <option value="0" <?php if($tax->status == 0) echo ' selected'; ?>><?=$this->lang->line('tax_status_active')?></option>
+                        <option value="1" <?php if($tax->status == 1) echo ' selected'; ?>><?=$this->lang->line('tax_status_inactive')?></option>
+                       
+                      </select>
+                      <span id="err_status" class="error invalid-feedback"><?=form_error('status');?></span>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="card-footer">
+                  <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                  <input type="hidden" value="<?=$tax->id?>" name="id">
+                  <button type="submit" name="submit" id="taxSubmit" data-tt="tooltip" title="Click here to Save Tax" class="btn btn-info"><?=$this->lang->line('tax_save')?></button>
+                  <a href="<?=base_url('tax')?>" class="btn btn-default float-right"><?=$this->lang->line('tax_cancel')?></a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+  
+    </div>
+    <aside class="control-sidebar control-sidebar-dark"></aside>
+  </div>
+
+<?php $this->load->view('layout/footer');?>
+
+
+<script type="text/javascript">
+
+ 
+  $(document).ready(function(e){
+
+    $('form#editTaxForm').submit(function(e){
+      // e.preventDefault();
+
+      var isError = false;
+      $('#taxSubmit').text('<?=$this->lang->line("please_wait")?>').attr('disabled','disabled');
+
+      $('form#editTaxForm .field_validation').each(function() {
+          
+          var id    = $(this).attr('id');
+          var value = $(this).val();
+          var field = $(this).attr('placeholder');
+
+          if(value==null || value==""){
+            $("form#editTaxForm #err_"+id).text(field+ " field is required.");
+            $('form#editTaxForm #'+id).addClass('is-invalid');
+            isError = true;
+          }
+          else
+          {
+            $("form#editTaxForm #err_"+id).text("");
+            $('form#editTaxForm #'+id).removeClass('is-invalid');
+            $('form#editTaxForm #'+id).addClass('is-valid');
+          }
+      });
+
+
+      if(isError == true)
+      {
+        $('#taxSubmit').text('<?=$this->lang->line("tax_save")?>').removeAttr('disabled');
+        return false;
+      }  
+      else 
+      {
+        return true;
+      }    
+
+
+    });
+
+    $("form#editTaxForm .field_validation").on("blur keyup change",  function (event){
+        var id    = $(this).attr('id');
+        var value = $(this).val();
+        var field = $(this).attr('placeholder');
+        
+        if(value==null || value==""){
+          $("form#editTaxForm #err_"+id).text(field+ " field is required.");
+          $('form#editTaxForm #'+id).addClass('is-invalid');
+          return false;
+        }
+        else{
+          $("form#editTaxForm #err_"+id).text("");
+          $('form#editTaxForm #'+id).removeClass('is-invalid');
+          $('form#editTaxForm #'+id).addClass('is-valid');
+        }
+    });
+
+  });
+</script>
+
+
+

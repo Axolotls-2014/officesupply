@@ -1,0 +1,4 @@
+PID,BatchNo,ProductName,Cost,Price,QTY,SellingPrice,UOM,Quantity
+100004,abc123,watch,200,400,10,300,NOS,8
+900037,n2,xyz,100,300,5,500,BAL,8
+100003,n1,NOKIA 3110,50,100,9,200,BOX,4

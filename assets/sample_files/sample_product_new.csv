@@ -1,0 +1,2 @@
+ManageInventory,ProductCode,ProductName,ProductDescription,ProductCategoryPCID,HSN,Cost,SellingPrice,Price,Markup,InitialQuantity,AlertQuantity,UOM,Status
+yes,P1001,Wireless Mouse,",2.4GHz Wireless Optical Mouse",100002,4012,111,222,333,good,22,11,Pcs,active

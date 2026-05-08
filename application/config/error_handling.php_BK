@@ -1,0 +1,43 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+/*
+|--------------------------------------------------------------------------
+| Error Handling Configuration
+|--------------------------------------------------------------------------
+|
+| This file configures error reporting to suppress PHP 8.2+ deprecation
+| warnings while maintaining security and catching actual errors.
+|
+*/
+
+// Suppress deprecation warnings (8192 = E_DEPRECATED)
+// Allow all other errors and warnings to be reported
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+
+// Set custom error handler to suppress specific deprecation notices
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    // Suppress dynamic property creation deprecation (8192)
+    if ($errno === E_DEPRECATED) {
+        if (strpos($errstr, 'Creation of dynamic property') !== false || 
+            strpos($errstr, 'Return type of') !== false ||
+            strpos($errstr, 'Optional parameter') !== false ||
+            strpos($errstr, 'Session cookie parameters') !== false ||
+            strpos($errstr, 'Session ini settings') !== false ||
+            strpos($errstr, 'Session cannot be started') !== false ||
+            strpos($errstr, 'Session save handler cannot be changed') !== false) {
+            return true; // Suppress this error
+        }
+    }
+    
+    // Suppress "headers already sent" warnings related to session handling
+    if ($errno === E_WARNING) {
+        if (strpos($errstr, 'headers already been sent') !== false || 
+            strpos($errstr, 'Cannot modify header information') !== false ||
+            strpos($errstr, 'session_set_cookie_params()') !== false) {
+            return true; // Suppress this warning
+        }
+    }
+    
+    return false; // Let other errors be handled normally
+}, E_ALL);

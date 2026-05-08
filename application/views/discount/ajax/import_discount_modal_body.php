@@ -1,0 +1,180 @@
+
+<style>
+  
+  .csv-table {
+    margin: 0 auto; 
+    margin-bottom: 15px; 
+    margin-top: 15px;
+    
+  }
+  .hide-on-select-all {
+      display: none;
+      visibility: hidden;
+  }
+
+  .table-container {
+    overflow-x: auto;
+   
+    max-width: 100%;
+  }
+
+  
+  .table-container table {
+    min-width: 100%;
+  }
+
+</style>
+
+<form role="form" method="POST" name="importDiscountForm" id="importDiscountForm" enctype="multipart/form-data" action="<?=base_url('discount/import_discount')?>">
+  <div class="modal-header text-left">
+    <h4 class="modal-title"><?php echo $this->lang->line('import_discount');?></h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <span aria-hidden="true">&times;</span></button>
+  </div>
+  <div class="modal-body">
+
+  <div class="form-group row">
+        <label for="csvfile" class="col-sm-4 col-form-label">
+          <?=$this->lang->line("discount_csv_file")?>
+        </label>
+        <div class="col-sm-8">
+          <div class="input-group input-group-sm">
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" id="csvfile" name="csvfile" accept=".csv">
+              <label class="custom-file-label" for="exampleInputFile">Choose file</label>
+            </div>
+          </div>
+          <span id="err_csvfile" class="error invalid-feedback"></span>
+        </div>
+      </div> 
+
+      <div class="form-group row">
+        <label for="csvfile" class="col-sm-4 col-form-label">
+          <!-- <?=$this->lang->line("product_update")?> -->
+        </label>  
+        <div class="col-sm-8">
+          <input type="checkbox" name="update_discount" value="1"> Update only discount<br/>
+          <input type="checkbox" name="create_discount" value="1"> Create new discount though it exist <br/>
+        </div>
+      </div> 
+
+      <div class="row">
+        <div class="col-md-12" style="opacity: 0.7; border-radius: 5px; background-color: #F8E4A4; font-size: 16px;">
+          <div class="m-4">
+            Download sample file  <a href="<?=base_url('assets/sample_files/sample_discount.csv')?>" target="_blank" class="btn btn-info" style="float:right">Click here to Download</a>  
+          </div>
+        </div>
+      </div>
+
+      <div id="result" class="table-container"></div>
+
+  </div>
+
+  <div class="modal-footer">
+    <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+    <button type="submit" name="submit" id="importDiscountubmit" class="btn btn-primary"><?=$this->lang->line('submit')?></button>
+    <button type="button" class="btn btn-default" data-dismiss="modal">
+      <?php echo $this->lang->line('btn_modal_close');?>
+    </button>
+  </div>
+</form>
+
+<script>
+  $(document).ready(function() {
+    $('#csvfile').change(function(event) {
+
+      event.preventDefault();
+      const formData = new FormData();
+      formData.append('csvfile', $('#csvfile')[0].files[0]);
+
+    
+
+      //alert(formData);
+
+      var csrfTokenName = "<?php echo $this->security->get_csrf_token_name(); ?>"; // Change to your desired token name
+      var csrfTokenValue = "<?php echo $this->security->get_csrf_hash(); ?>"; // Change to your actual CSRF token value
+
+      // Add the CSRF token to the form data
+      formData.append(csrfTokenName, csrfTokenValue);
+
+      $.ajax({
+          type: 'POST',
+          url: '<?php echo base_url('discount/get_import_discount')?>',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+
+            let resultHTML = '<h6 style="margin-top:10px;">Existing Discount:</h6> ';
+          
+             if (response.length > 0) 
+             {
+                resultHTML += '<table border="1" class="table table-bordered table-striped csv-table">';
+
+                resultHTML += '<tr>';
+                resultHTML += '<th> Serial No. </th>';
+                resultHTML += '<th> Discount Name </th>';
+                resultHTML += '<th> Discount Value </th>';
+                resultHTML += '<th> Valid From </th>';
+                resultHTML += '<th> Valid To </th>';
+                resultHTML += '</tr>';
+
+                $.each(response, function (index, discount) {
+                    let serialNumber = index + 1;
+                    resultHTML += '<tr>';
+                    resultHTML += '<td>' + serialNumber + '</td>';
+                    resultHTML += '<td>' + discount.name + '</td>';
+                    resultHTML += '<td>' + discount.value + '</td>';
+                    resultHTML += '<td>' + formatDate(discount.valid_from) + '</td>';
+                    resultHTML += '<td>' + formatDate(discount.valid_to) + '</td>';
+    
+                    resultHTML += '</tr>';
+                });
+
+                resultHTML += '</table>';
+            } 
+            else 
+            {
+              resultHTML += '<table border="1" class="table table-bordered table-striped csv-table">';
+              resultHTML += '<tr>';
+              resultHTML += '<th> Serial No. </th>';
+                resultHTML += '<th> Discount Name </th>';
+                resultHTML += '<th> Discount Value </th>';
+                resultHTML += '<th> Valid From </th>';
+                resultHTML += '<th> Valid To </th>';
+                resultHTML += '</tr>';
+
+              resultHTML += '<tr>';
+                resultHTML += '<td colspan="5"> No matched discount found. </th>';
+               
+                resultHTML += '</tr>';
+              resultHTML += '</table>';
+              //resultHTML += '<p>No matched suppliers found.</p>';
+            }
+
+            $('#result').html(resultHTML);
+
+          },
+          error: function (error) {
+            alert("AJAX Error: " + error); // Show the error message
+          }
+      });
+    });
+
+   
+});
+
+function formatDate(dateString) {
+    if (!dateString) return '';  // Handle cases where the date is undefined or null
+
+    let parts = dateString.split('-');
+    if (parts.length === 3) {
+        let [year, month, day] = parts;
+        return day + '-' + month + '-' + year;
+    }
+    // Return the original string if the format is not as expected
+    return dateString;
+}
+
+</script>
+  
