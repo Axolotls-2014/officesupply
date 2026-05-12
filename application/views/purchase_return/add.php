@@ -442,13 +442,17 @@ ini_set('display_startup_errors', 1);
                                                                     <?=$this->lang->line('product_description')?></th>
                                                                 <!--<th class="span2" width="100px"><?=$this->lang->line('product_batch_no')?></th>-->
                                                                 <th class="span2" width="100px">
-                                                                    <?=$this->lang->line('purchase_return_qty')?></th>
+                                                                    <!--<?=$this->lang->line('purchase_return_qty')?>-->
+                                                                    Return Qty
+                                                                </th>
                                                                 <!--<th class="span2 <?= (empty($promotion) || $promotion->field_status !== 'active') ? 'd-none' : '' ?>" width="100px">-->
                                                                 <!--<?=$this->lang->line('proforma_invoice_free_qty')?>-->
                                                                 <!--</th>-->
                                                                 <th class="span2" width="100px">
-                                                                    <?=$this->lang->line('purchase_return_cost')?></th>
-
+                                                                    Purchase Price
+                                                                    <!--<?=$this->lang->line('purchase_return_cost')?>-->
+                                                                </th>
+                                                                <th class="span2" width="100px">Discount</th>
                                                                 <!--<th class="span2 <?= (empty($mfg_date) || $mfg_date->field_status !== 'active') ? 'd-none' : '' ?>" width="100px">-->
                                                                 <!--  <?= $this->lang->line('product_mfg_date') ?>-->
                                                                 <!--</th>-->
@@ -1214,6 +1218,7 @@ function add_row(data, return_quantity = null, free_quantity = null, purchased_q
         '<input type="hidden" name="price" value="' + (price || 0) + '">' +
         '</span>' + select_discount  + 
         '</td>';
+    cols += '<td><span name="discount_amount_display">' + d_amount + '</span></td>';
     cols += '<td>' + input_uom + '</td>';
     cols += '<td>' + taxable_value + '</td>';
     cols += '<td>' + tax + '</td>';
@@ -1500,7 +1505,9 @@ function add_row(data, return_quantity = null, free_quantity = null, purchased_q
     row.find('span[name="c_tax"]').text(cgst_tax.toFixed(2));
     row.find('span[name="s_tax"]').text(sgst_tax.toFixed(2));
     row.find('span[name="i_tax"]').text(igst_tax.toFixed(2));
-    row.find('span[name="discount_amount"]').text(final_discount.toFixed(2));
+    // row.find('span[name="discount_amount"]').text(final_discount.toFixed(2));
+    row.find('span[name="discount_amount"]').text(final_discount.toFixed(2)); // For logic
+    row.find('span[name="discount_amount_display"]').text(final_discount.toFixed(2)); // For UI display
     row.find('span[name="subtotal"]').text(subtotal.toFixed(2));
 }
     

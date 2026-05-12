@@ -33,18 +33,29 @@
           );
 
           // Get already returned quantity for this purchase return
-          $already_returned = $this->purchase_return_delivery_model->get_total_no_of_quantity_purchase_return_created(
-              $purchase_return->id,  // CHANGE: Use $purchase_return->id
-              $item->product_id, 
-              $item->batch_no
-          ); 
+        //   $already_returned = $this->purchase_return_delivery_model->get_total_no_of_quantity_purchase_return_created(
+        //       $purchase_return->id,  // CHANGE: Use $purchase_return->id
+        //       $item->product_id, 
+        //       $item->batch_no
+        //   ); 
           
-          // Calculate available for return (original purchase qty - already returned)
+        //   // Calculate available for return (original purchase qty - already returned)
+        //   $available_for_return = $item->quantity - $already_returned;
+          
+        //   // Get current return quantity from existing record
+        //   $current_return_qty = isset($item->return_quantity) ? $item->return_quantity : 
+        //                         (isset($item->quantity) ? $item->quantity : 0);
+         $already_returned = $this->purchase_return_model->get_already_returned_qty($purchase->invoice_no, $item->product_id); 
+          
+          // 2. MODIFIED: Calculate returnable balance (Original 100 - Previous 10 = 90)
           $available_for_return = $item->quantity - $already_returned;
           
-          // Get current return quantity from existing record
+          // 3. EXISTING CODE: Keep your logic for the default quantity in the input
           $current_return_qty = isset($item->return_quantity) ? $item->return_quantity : 
                                 (isset($item->quantity) ? $item->quantity : 0);
+          
+          // Safety Check: If the default qty is higher than what's left, cap it at 90
+          if($current_return_qty > $available_for_return) $current_return_qty = $available_for_return;
       ?>
         <tr>
           <td>
@@ -73,7 +84,8 @@
             <?=$already_returned?>
             <input type="hidden" name="delivered_quantity" value="<?=$already_returned?>">
            </td>
-          <td><?=number_format($warehouse_product->quantity, 2)?></td>
+          <!--<td><?=number_format($warehouse_product->quantity, 2)?></td>-->
+          <td><?=number_format($available_for_return, 2)?></td>
           <td>
             <input type="number" class="form-control return_quantity" 
                    name="return_quantity" 

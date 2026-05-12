@@ -30,9 +30,16 @@ class Purchase_return extends MY_Controller {
 			//$data['supplier'] 						= $this->supplier_model->get_records();
 			$data['purchase_return'] 				= $this->purchase_return_model->get_purchase_return_records();
 			
-			$data['total_purchase_return']	= $this->transaction_model->get_total_transaction_amount(null, PURCHASE_RETURN_MODULE, PURCHASE_RETURN_TRANSACTION_TYPE);
-			$data['total_paid_amount'] 			= $this->transaction_model->get_total_transaction_amount(null, PURCHASE_RETURN_MODULE, PAYMENT_TRANSACTION_TYPE);
-
+// 			$data['total_purchase_return']	= $this->transaction_model->get_total_transaction_amount(null, PURCHASE_RETURN_MODULE, PURCHASE_RETURN_TRANSACTION_TYPE);
+            $data['total_purchase_return'] = $this->purchase_return_model->get_total_delivered_return_amount();
+// 			$data['total_paid_amount'] 			= $this->transaction_model->get_total_transaction_amount(null, PURCHASE_RETURN_MODULE, PAYMENT_TRANSACTION_TYPE);
+            // Sum payments only for returns that are linked to a delivery
+            $this->db->select_sum('th.amount');
+            $this->db->from('transaction_header th');
+            $this->db->join('purchase_return_delivery d', 'd.purchase_return_id = th.entry_id', 'inner');
+            $this->db->where('th.module', PURCHASE_RETURN_MODULE);
+            $this->db->where('th.type', PAYMENT_TRANSACTION_TYPE);
+            $data['total_paid_amount'] = $this->db->get()->row()->amount ?? 0;
 // 			$log_data = array(
 //                   "user_id"     => $this->session->userdata("user_id"),
 //                   "module"      => "purchase_return",
@@ -1411,17 +1418,39 @@ else if($delivered_quantity == $ordered_quantity)
 
 	/************************************** End Dynamic Datatable function ***************************************/
 
-	public function get_purchase_items_by_purchase_id()
-	{
-		$purchase_id 											= $this->input->post('purchase_id');
-		$data['purchase']									= $this->purchase_model->get_purchase_single_record($purchase_id);
-		$data['purchase_items']						= $this->purchase_model->get_purchase_item_records($purchase_id);
+// 	public function get_purchase_items_by_purchase_id()
+// 	{
+// 		$purchase_id 											= $this->input->post('purchase_id');
+// 		$data['purchase']									= $this->purchase_model->get_purchase_single_record($purchase_id);
+// 		$data['purchase_items']						= $this->purchase_model->get_purchase_item_records($purchase_id);
 
-  	$response 												= array();
-  	$response['view_purchase_items'] 	= $this->load->view('purchase_return/ajax/view_purchase_items',$data,TRUE);
+//   	$response 												= array();
+//   	$response['view_purchase_items'] 	= $this->load->view('purchase_return/ajax/view_purchase_items',$data,TRUE);
 
-  	echo json_encode($response);
-	}
+//   	echo json_encode($response);
+// 	}
+
+public function get_purchase_items_by_purchase_id()
+{
+    $purchase_id = $this->input->post('purchase_id');
+    $purchase    = $this->purchase_model->get_purchase_single_record($purchase_id);
+    $items       = $this->purchase_model->get_purchase_item_records($purchase_id);
+
+    // Loop through items to find previous returns
+    foreach ($items as $item) {
+        $item->previously_returned = $this->purchase_return_model->get_already_returned_qty($purchase->invoice_no, $item->product_id);
+        // Calculate remaining allowed to return
+        $item->available_to_return = $item->quantity - $item->previously_returned;
+    }
+
+    $data['purchase']       = $purchase;
+    $data['purchase_items'] = $items;
+
+    $response = array();
+    $response['view_purchase_items'] = $this->load->view('purchase_return/ajax/view_purchase_items', $data, TRUE);
+
+    echo json_encode($response);
+}
 
 	public function upload_documents() 
 	{

@@ -604,6 +604,33 @@ private function _get_datatables_query()
     return $sequenceNumber;
 }
 
+public function get_already_returned_qty($invoice_no, $product_id)
+{
+    $this->db->select_sum('pri.quantity');
+    $this->db->from('purchase_return_items pri');
+    $this->db->join('purchase_return pr', 'pr.id = pri.purchase_return_id');
+    $this->db->where('pr.invoice_no', $invoice_no);
+    $this->db->where('pri.product_id', $product_id);
+    $this->db->where('pr.delete_status', 0);
+    $query = $this->db->get();
+    $result = $query->row();
+    return ($result && $result->quantity) ? (float)$result->quantity : 0;
+}
+
+public function get_total_delivered_return_amount()
+{
+    // We sum the 'total' from the purchase_return table 
+    // but only where a matching record exists in the delivery table
+    $this->db->select('SUM(p.total) as delivered_total');
+    $this->db->from('purchase_return p');
+    // Inner join ensures only returns with at least one delivery record are counted
+    $this->db->join('purchase_return_delivery d', 'd.purchase_return_id = p.id', 'inner');
+    $this->db->where('p.delete_status', 0);
+    
+    $query = $this->db->get();
+    $result = $query->row();
+    return ($result->delivered_total) ? (float)$result->delivered_total : 0;
+}
     
 }
 ?>

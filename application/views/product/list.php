@@ -21,16 +21,28 @@
             <div class="card card-warning card-outline">
               <div class="card-body">
                 <div class="row">
-<div class="col-md-2">
-    <label>Quantity</label>
-    <select class="form-control form-control-sm select2bs4" id="quantity">
-        <option value="<?=QUANTITY_ALL?>">ALL</option>
-        <option value="<?=QUANTITY_GREATER_THEN_ZERO?>">Greater than Zero</option>
-        <option value="<?=QUANTITY_ZERO?>">Zero</option>
-      <!--  <option value="<?=QUANTITY_BELOW_ZERO?>">Below 0</option>-->
-        <option value="<?=QUANTITY_NEGATIVE?>">Negative</option>
-    </select>
-</div>
+                   <div class="col-md-2">
+                        <label>From Date</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm datepicker" id="from_date" name="from_date" value="<?=date('01-m-Y')?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label>To Date</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm datepicker" id="to_date" name="to_date" value="<?=date('d-m-Y')?>" readonly>
+                        </div>
+                    </div>
+                <div class="col-md-2">
+                    <label>Quantity</label>
+                    <select class="form-control form-control-sm select2bs4" id="quantity">
+                        <option value="<?=QUANTITY_ALL?>">ALL</option>
+                        <option value="<?=QUANTITY_GREATER_THEN_ZERO?>">Greater than Zero</option>
+                        <option value="<?=QUANTITY_ZERO?>">Zero</option>
+                      <!--  <option value="<?=QUANTITY_BELOW_ZERO?>">Below 0</option>-->
+                        <option value="<?=QUANTITY_NEGATIVE?>">Negative</option>
+                    </select>
+                </div>
                 <?php 
                     $user_id = $this->session->userdata('user_id');
                     $user = $this->db->get_where('users', ['id' => $user_id])->row();
@@ -48,32 +60,8 @@
                     }
                 ?>
                 
-                <div class="col-md-2">
-                    <label>Branch</label>
-                    <select class="form-control form-control-sm select2bs4" id="warehouse_id" name="w_id" <?= $user_branch_id ? 'disabled' : '' ?>>
-                            <option value="">All Branches</option>  <!-- Add this option -->
-   
-                    <?php if ($user_branch_id && $warehouse_name): ?>
-                            
-                            <option value="<?= $user_branch_id ?>" selected><?= $warehouse_name ?></option>
-                        <?php else: ?>
-                         
-                            <?php 
-                                $first_warehouse = true;
-                                foreach ($warehouses as $value): 
-                            ?>
-                                <option value="<?= $value->id ?>" 
-                                    <?= ($first_warehouse) ? 'selected' : '' ?>
-                                    <?= ($value->is_default == WAREHOUSE_IS_DEFAULT_YES && !$first_warehouse) ? 'selected' : '' ?>>
-                                    <?= $value->name ?>
-                                </option>
-                                <?php 
-                                    $first_warehouse = false;
-                                endforeach; 
-                            ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
+                    <input type="hidden" id="warehouse_id" value="1">
+
                   <div class="col-md-2">
                     <label>Products</label>
                     <select class="form-control form-control-sm select2bs4" id="product_id" name="p_id"> 
@@ -179,42 +167,39 @@
               <!-- /.card-header -->
               <div class="card-body">
                 <table id="example" class="table table-bordered table-striped">
-                 <thead>
-    <tr>
-        <th width="2%"><input type="checkbox" class="all_product"></th>
-        <th>Branch</th>
-        <th>Product Name</th>
-        <th>HSN</th>
-        <th>Available Qty</th>
-        <th>Batch No</th>
-        <th>UOM</th>
-        <th>Alert Qty</th>
-        <th>MRP (<?=$this->session->userdata('currency_symbol')?>)</th>
-        <th>Purchase Price (<?=$this->session->userdata('currency_symbol')?>)</th>
-        <th>Taxable Value (<?=$this->session->userdata('currency_symbol')?>)</th>
-        <th>Total Amount (<?=$this->session->userdata('currency_symbol')?>)</th>
-        <th>Status</th>
-        <th width="15%">Action</th>   
-    </tr>
-</thead>
-                  <tbody id="product_list">
-                  </tbody>
-<tfoot align="right">
-    <tr>
-        <th style="text-align: left" colspan="4"></th>
-        <th style="text-align: left"></th>
-        <th></th>
-        <th></th>
-        <th></th>
-        <th></th>
-        <th></th>
-        <th style="text-align: left !important"></th>
-        <th style="text-align: left !important"></th>
-        <th></th>
-        <th></th>
-    </tr>
-</tfoot>
-                </table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Ref Number</th>
+                    <th>PID</th>
+                    <th>Product Name</th>
+                    <th>HSN</th>
+                    <th>UOM</th>
+                    <th>Alert</th>
+                    <th>MRP</th>
+                    <th>Pur. Price</th>
+                    <th>Sale Price</th>
+                    <th>In Qty</th>
+                    <th>Out Qty</th>
+                    <th>Closing Stock</th>
+                    <th>Closing Value</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="product_list"></tbody>
+            <tfoot style="background-color: #eee; font-weight: bold;">
+                <tr>
+                    <td colspan="11" align="right">Summary:</td>
+                    <td id="total_in">0</td>
+                    <td id="total_out">0</td>
+                    <td id="total_stock">0</td>
+                    <td id="total_value">0.00</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+</table>
               </div>
             </div>
           </div>
@@ -749,105 +734,160 @@
         },
       });
     }*/
-function initialize_datatable()
-{
-    var product_id          = $('#product_id').val();
-    var warehouse_id        = $('#warehouse_id').val();  // This will be empty for "All Branches"
-    var product_status      = $('#product_status').val();
-    var quantity            = $('#quantity').val();
-    var manage_inventory    = $('#manage_inventory').val();
+// function initialize_datatable()
+// {
+//     var product_id          = $('#product_id').val();
+//     var warehouse_id        = $('#warehouse_id').val();  // This will be empty for "All Branches"
+//     var product_status      = $('#product_status').val();
+//     var quantity            = $('#quantity').val();
+//     var manage_inventory    = $('#manage_inventory').val();
 
+//     $('#example').DataTable({ 
+//         "processing": true,
+//         "serverSide": true,
+//         "bDestroy": true,
+//         "order": [],
+//         "pageLength": 100,
+ 
+//         "ajax": {
+//             "url": "<?php echo site_url('product/ajax_list')?>",
+//             "type": "POST",
+//             "data": {
+//                 'warehouse_id' : warehouse_id,  // Empty value = All Branches
+//                 'product_id' : product_id,
+//                 'product_status' : product_status,
+//                 'quantity' : quantity,
+//                 'manage_inventory' : manage_inventory,
+//                 '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
+//             }
+//         },
+
+//         'initComplete':function(settings, json){
+//             $('[data-tt="tooltip"]').tooltip({trigger : 'hover'}); 
+//         },  
+ 
+//         "columnDefs": [
+//             { 
+//                 "targets": [0, 11],
+//                 "orderable": false,
+//             },
+//         ],
+
+// "footerCallback": function (row, data, start, end, display) {
+//     var api = this.api(), data;
+ 
+//     var intVal = function (i) {
+//         return typeof i === 'string' ?
+//             i.replace(/[\$,]/g, '')*1 :
+//             typeof i === 'number' ?
+//                 i : 0;
+//     };
+ 
+//     // Computing totals
+//     var availableQtyTotal = api
+//         .column(4)
+//         .data()
+//         .reduce(function (a, b) {
+//             return intVal(a) + intVal(b);
+//         }, 0);
+    
+//     var mrpTotal = api
+//         .column(8)
+//         .data()
+//         .reduce(function (a, b) {
+//             return intVal(a) + intVal(b);
+//         }, 0);
+    
+//     var purchasePriceTotal = api
+//         .column(9)
+//         .data()
+//         .reduce(function (a, b) {
+//             return intVal(a) + intVal(b);
+//         }, 0);
+    
+//     var taxableValueTotal = api
+//         .column(10)
+//         .data()
+//         .reduce(function (a, b) {
+//             return intVal(a) + intVal(b);
+//         }, 0);
+    
+//     var totalAmountTotal = api
+//         .column(11)
+//         .data()
+//         .reduce(function (a, b) {
+//             return intVal(a) + intVal(b);
+//         }, 0);
+    
+//     // Update footer
+//     $(api.column(0).footer()).html('Total');
+//     $(api.column(4).footer()).html(availableQtyTotal.toLocaleString("en-US"));
+//     $(api.column(10).footer()).html(taxableValueTotal.toLocaleString("en-US"));
+//     $(api.column(11).footer()).html(totalAmountTotal.toLocaleString("en-US"));
+// },
+//     });
+// }
+
+function initialize_datatable() {
     $('#example').DataTable({ 
         "processing": true,
         "serverSide": true,
         "bDestroy": true,
-        "order": [],
-        "pageLength": 100,
- 
         "ajax": {
             "url": "<?php echo site_url('product/ajax_list')?>",
             "type": "POST",
-            "data": {
-                'warehouse_id' : warehouse_id,  // Empty value = All Branches
-                'product_id' : product_id,
-                'product_status' : product_status,
-                'quantity' : quantity,
-                'manage_inventory' : manage_inventory,
-                '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
+            "data": function(d) {
+                d.from_date = $('#from_date').val(); 
+                d.to_date = $('#to_date').val();         
+                d.product_id = $('#product_id').val();
+                d.quantity = $('#quantity').val();
+                d.product_status = $('#product_status').val();
+                d.manage_inventory = $('#manage_inventory').val();
+                d.<?php echo $this->security->get_csrf_token_name(); ?> = '<?php echo $this->security->get_csrf_hash(); ?>';
             }
         },
+        "footerCallback": function (row, data, start, end, display) {
+            var api = this.api();
+            var intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,<b>,<\/b>]/g, '')*1 : typeof i === 'number' ? i : 0; };
 
-        'initComplete':function(settings, json){
-            $('[data-tt="tooltip"]').tooltip({trigger : 'hover'}); 
-        },  
- 
-        "columnDefs": [
-            { 
-                "targets": [0, 11],
-                "orderable": false,
-            },
-        ],
+            var tIn = api.column(11).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            var tOut = api.column(12).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            
+            // Latest balance is in the first row due to array_reverse
+            var latestStock = data.length > 0 ? intVal(data[0][13]) : 0;
+            var latestValue = data.length > 0 ? intVal(data[0][14]) : 0;
 
-"footerCallback": function (row, data, start, end, display) {
-    var api = this.api(), data;
- 
-    var intVal = function (i) {
-        return typeof i === 'string' ?
-            i.replace(/[\$,]/g, '')*1 :
-            typeof i === 'number' ?
-                i : 0;
-    };
- 
-    // Computing totals
-    var availableQtyTotal = api
-        .column(4)
-        .data()
-        .reduce(function (a, b) {
-            return intVal(a) + intVal(b);
-        }, 0);
-    
-    var mrpTotal = api
-        .column(8)
-        .data()
-        .reduce(function (a, b) {
-            return intVal(a) + intVal(b);
-        }, 0);
-    
-    var purchasePriceTotal = api
-        .column(9)
-        .data()
-        .reduce(function (a, b) {
-            return intVal(a) + intVal(b);
-        }, 0);
-    
-    var taxableValueTotal = api
-        .column(10)
-        .data()
-        .reduce(function (a, b) {
-            return intVal(a) + intVal(b);
-        }, 0);
-    
-    var totalAmountTotal = api
-        .column(11)
-        .data()
-        .reduce(function (a, b) {
-            return intVal(a) + intVal(b);
-        }, 0);
-    
-    // Update footer
-    $(api.column(0).footer()).html('Total');
-    $(api.column(4).footer()).html(availableQtyTotal.toLocaleString("en-US"));
-    $(api.column(10).footer()).html(taxableValueTotal.toLocaleString("en-US"));
-    $(api.column(11).footer()).html(totalAmountTotal.toLocaleString("en-US"));
-},
+            $('#total_in').html(tIn);
+            $('#total_out').html(tOut);
+            $('#total_stock').html(latestStock);
+            $('#total_value').html(latestValue.toFixed(2));
+        }
     });
 }
 
 
 
-    $(document).on('change','#product_id, #warehouse_id, #quantity,#product_status,#manage_inventory',function(e){
-      initialize_datatable();
-    })
+    // $(document).on('change','#product_id, #warehouse_id, #quantity,#product_status,#manage_inventory',function(e){
+    //   initialize_datatable();
+    // })
+    
+    // Add #filter_date to the list of IDs to listen for
+    // $(document).on('change', '#filter_date, #product_id, #warehouse_id, #quantity, #product_status, #manage_inventory', function(e) {
+    //     initialize_datatable();
+    // });
+    $(document).on('change', '#from_date, #to_date, #product_id, #quantity, #product_status', function() {
+    initialize_datatable();
+});
+    
+    // Since you are using a datepicker, standard 'change' sometimes doesn't fire.
+    // Use this to ensure the table refreshes as soon as a date is picked:
+    $('#from_date').datepicker().on('changeDate', function(e) {
+        initialize_datatable();
+    });
+    $('#to_date').datepicker().on('changeDate', function(e) {
+        initialize_datatable();
+    });
+
 
    
 
