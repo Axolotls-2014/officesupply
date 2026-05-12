@@ -576,7 +576,7 @@ ini_set('display_startup_errors', 1);
                                     class="btn btn-info"><?=$this->lang->line('purchase_return_add')?></button>
                                 <!-- <button type="submit" name="submit" id="purchasereturnSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase_return & Pay Now</button>                      -->
                                 <span class="btn btn-default float-right" id="cancel"
-                                    onclick="window.history.back()"><?=$this->lang->line('purchase_return_cancel')?></span>
+                                    onclick="cancel('purchase_return')"><?=$this->lang->line('purchase_return_cancel')?></span>
                             </div>
                     </form>
                 </div>

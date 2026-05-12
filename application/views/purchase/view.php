@@ -484,10 +484,10 @@ footer {
         </td>
         <td colspan="3">
             <!-- Sub Total (Products only, before discount) -->
-              <div>
+            <div>
                 <strong>Sub Total:</strong> 
                 <span style="float:right;">
-                    ₹ <?= number_format_i($purchase->total_taxable_value); ?>
+                    ₹ <?= number_format_i(($total_taxable_value - ($purchase->freight_taxable_value ?? 0)) + $total_discount); ?>
                 </span>
             </div>
             

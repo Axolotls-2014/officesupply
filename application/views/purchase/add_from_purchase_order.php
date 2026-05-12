@@ -233,14 +233,14 @@
                       <div class="col-sm-2">
                         <div class="form-group">
                           <label><?=$this->lang->line('purchase_invoice_no')?><span class="text-danger">*</span></label>
-                          <input type="text" class="form-control field_validation" id="invoice_no" name="invoice_no" value="<?=$purchase_order->invoice_no?>" placeholder="<?=$this->lang->line('purchase_invoice_no')?>"  required>
+                          <input type="text" class="form-control field_validation" id="invoice_no" name="invoice_no" value="<?=$purchase_order->invoice_no?>" placeholder="<?=$this->lang->line('purchase_invoice_no')?>">
                           <span id="err_invoice_no" class="error invalid-feedback"><?=form_error('invoice_no');?></span>
                         </div>
                       </div>
                       <div class="col-sm-2">
                         <div class="form-group">
                           <label><?=$this->lang->line('purchase_date')?><span class="text-danger">*</span></label>
-                          <input type="text" class="form-control datepicker field_validation" id="purchase_date" name="purchase_date" value="<?=date('d-m-Y', strtotime($purchase_order->purchase_order_date))?>" placeholder="Invoice Date" required>
+                          <input type="text" class="form-control datepicker field_validation" id="purchase_date" name="purchase_date" value="<?=date('d-m-Y', strtotime($purchase_order->purchase_order_date))?>" placeholder="Invoice Date">
                           <span id="err_purchase_date" class="error invalid-feedback"><?=form_error('purchase_date');?></span>
                         </div>
                       </div>
@@ -406,7 +406,7 @@
                                     <div class="input-group input-group-sm">
                                       <input type="number" class="form-control form-control-sm text-right discount-value" name="discount_value" value="<?=$row->discount_value?>" step="0.01" min="0" style="width: 65%;">
                                       <select class="form-control form-control-sm discount-type" name="discount_type" style="width: 35%;">
-<option value="percentage" <?=($row->discount_type == 'percentage') ? 'selected' : ''?>>%</option>
+                                        <option value="percentage" <?=($row->discount_type == 'percentage') ? 'selected' : ''?>>%</option>
                                         <option value="fixed" <?=($row->discount_type == 'fixed') ? 'selected' : ''?>><?=$currency?></option>
                                       </select>
                                     </div>
@@ -547,7 +547,7 @@
                   <input type="hidden" name="freight_data" id="freight_data" value='{"freight_amount":<?=$purchase_order->additional_cost_amount?>,"freight_taxable_value":0,"freight_sub_total":<?=$purchase_order->additional_cost_amount?>}'>
                   
                   <button type="submit" name="submit" id="purchaseSubmit" class="btn btn-info"><?=$this->lang->line('purchase_add')?></button>
-                  <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_cancel')?></span>
+                  <span class="btn btn-default float-right" id="cancel" onclick="cancel('purchase')"><?=$this->lang->line('purchase_cancel')?></span>
                 </div>
               </div>
             </form>
@@ -736,8 +736,7 @@ $(document).ready(function(e){
         var product = data.product;
         var rowCount = $("#product_table_body tr").length;
         var srNo = rowCount + 1;
-        // var mrp = product.mrp || product.cost || 0;
-        var mrp = parseFloat(product.mrp) > 0 ? product.mrp : (product.cost || 0);
+        var mrp = product.mrp || product.cost || 0;
         var hsn = product.hsn || 'N/A';
 
         var newRow = $('<tr class="product_row">');
@@ -815,7 +814,6 @@ $(document).ready(function(e){
     }
     
     function calculateRow(row) {
-        console.log("dddddd" , row);
         if(row.hasClass('freight-row')) {
             var amount = parseFloat(row.find('.freight-amount').val()) || 0;
             row.find('span[name="freight_taxable_value"]').text('0.00');
@@ -827,33 +825,22 @@ $(document).ready(function(e){
         var cost = parseFloat(row.find('input[name^="cost"]').val()) || 0;
         var discountValue = parseFloat(row.find('input[name^="discount_value"]').val()) || 0;
         var discountType = row.find('select[name^="discount_type"]').val();
-        console.log("Quantity:", quantity);
-console.log("Cost:", cost);
-console.log("Discount Value:", discountValue);
-console.log("Discount Type:", discountType);
-
+        
         var priceAfterDiscount = cost;
         var discountAmount = 0;
         if (discountValue > 0) {
             if (discountType === 'percentage') {
                 discountAmount = (cost * discountValue) / 100;
                 priceAfterDiscount = cost - discountAmount;
-                        console.log("Percentage Discount Applied");
-
             } else {
                 discountAmount = discountValue;
                 priceAfterDiscount = cost - discountValue;
-                        console.log("Flat Discount Applied");
-
             }
         }
         priceAfterDiscount = Math.max(0, priceAfterDiscount);
         discountAmount = Math.max(0, discountAmount);
-        console.log("Discount Amount:", discountAmount);
-console.log("Price After Discount:", priceAfterDiscount);
         row.find('input[name^="discount_amount"]').val(discountAmount.toFixed(2));
-        row.find('span[name^="discount_amount"]').text('Discount: ' + discountAmount.toFixed(2)); // 👈 add this
-
+        
         var taxable_value = quantity * priceAfterDiscount;
         var igst_rate = parseFloat(row.find('input[name^="igst_rate"]').val()) || 0;
         var cgst_rate = parseFloat(row.find('input[name^="cgst_rate"]').val()) || 0;
@@ -1159,8 +1146,6 @@ $('#addPurchaseForm').on('submit', function(e) {
     
     // Initialize existing purchase order items
     function initializeExistingPurchaseOrderItems(purchaseOrderItems) {
-            console.log("1. Table is about to be emptied");
-
         if (!purchaseOrderItems || purchaseOrderItems.length === 0) {
             console.log('No existing items to load');
             return;
@@ -1177,8 +1162,7 @@ $('#addPurchaseForm').on('submit', function(e) {
             var product_name = item.product_name || '';
             var description = item.description || '';
             var hsn = item.hsn || 'N/A';
-            // var mrp = item.mrp || item.cost || 0;
-            var mrp = parseFloat(item.selling_price) > 0 ? item.selling_price : (item.mrp || item.cost || 0);
+            var mrp = item.mrp || item.cost || 0;
             var uom_uom = item.uom_uom || '';
             var uom_id = item.uom_id || '';
             var uom_name = item.uom_name || '';
@@ -1193,7 +1177,7 @@ $('#addPurchaseForm').on('submit', function(e) {
             var cgst_tax = item.cgst_tax || 0;
             var sgst_tax = item.sgst_tax || 0;
             var igst_tax = item.igst_tax || 0;
-            console.log(item ,"items") ;
+            
             var newRow = $('<tr class="product_row">');
             var cols = "";
             cols += '<td class="text-center">' +
@@ -1213,35 +1197,13 @@ $('#addPurchaseForm').on('submit', function(e) {
                     '<span name="uom">' + escapeHtml(uom_uom) + '<\/span><\/td>';
             cols += '<td class="text-right"><span name="mrp">' + parseFloat(mrp).toFixed(2) + '<\/span><\/td>';
             cols += '<td><input type="number" class="form-control form-control-sm text-right cost-input" name="cost" step="0.01" value="' + parseFloat(cost).toFixed(2) + '" min="0"><\/td>';
-            // cols += '<td><div class="input-group input-group-sm">' +
-            //         '<input type="number" class="form-control form-control-sm text-right discount-value" name="discount_value" value="' + (item.discount_value || 0) + '" step="0.01" min="0" style="width: 65%;">' +
-            //         '<select class="form-control form-control-sm discount-type" name="discount_type" style="width: 35%;">' +
-            //         '<option value="percentage"' + ((item.discount_type || 'percentage') === 'percentage' ? ' selected' : '') + '%<\/option>' +
-            //         '<option value="fixed"' + ((item.discount_type || 'percentage') === 'fixed' ? ' selected' : '') + '>' + currencySymbol + '<\/option>' +
-            //         '<\/select><\/div>' +
-            //         '<input type="hidden" name="discount_amount" value="' + (item.discount_amount || 0) + '"><\/td>';
-            
-            var discount_type_val = item.discount_type;
-            if (discount_type_val == '1' || discount_type_val == 1) {
-                discount_type_val = 'percentage';
-            } else if (discount_type_val == '0' || discount_type_val == 0) {
-                discount_type_val = 'fixed';
-            } else {
-                discount_type_val = 'percentage'; // default
-            }
-            
-            var discount_amount_val = parseFloat(item.discount_amount) || 0;
-            
             cols += '<td><div class="input-group input-group-sm">' +
                     '<input type="number" class="form-control form-control-sm text-right discount-value" name="discount_value" value="' + (item.discount_value || 0) + '" step="0.01" min="0" style="width: 65%;">' +
                     '<select class="form-control form-control-sm discount-type" name="discount_type" style="width: 35%;">' +
-                    '<option value="percentage"' + (discount_type_val === 'percentage' ? ' selected' : '') + '>%<\/option>' +
-                    '<option value="fixed"' + (discount_type_val === 'fixed' ? ' selected' : '') + '>' + currencySymbol + '<\/option>' +
+                    '<option value="percentage"' + ((item.discount_type || 'percentage') === 'percentage' ? ' selected' : '') + '%<\/option>' +
+                    '<option value="fixed"' + ((item.discount_type || 'percentage') === 'fixed' ? ' selected' : '') + '>' + currencySymbol + '<\/option>' +
                     '<\/select><\/div>' +
-                    '<input type="hidden" name="discount_amount" value="' + discount_amount_val.toFixed(2) + '">' +
-                    '<span name="discount_amount" class="discount_amount text-info" style="display:block; font-size:12px;">Discount: ' + discount_amount_val.toFixed(2) + '<\/span>' +
-                    '<\/td>';
-        
+                    '<input type="hidden" name="discount_amount" value="' + (item.discount_amount || 0) + '"><\/td>';
             cols += '<td class="text-right"><span name="taxable_value">' + parseFloat(taxable_value).toFixed(2) + '<\/span><\/td>';
             
             let taxHtml = '<input type="hidden" name="tax_id" value="' + (item.tax_id || '1') + '">';
@@ -1271,7 +1233,7 @@ $('#addPurchaseForm').on('submit', function(e) {
             $("#product_table_body").append(newRow);
         });
         
-        // $("#product_table_body tr").each(function() { calculateRow($(this)); });
+        $("#product_table_body tr").each(function() { calculateRow($(this)); });
         calculateGrandTotal();
         updateSerialNumbers();
         console.log('Successfully loaded ' + purchaseOrderItems.length + ' items');

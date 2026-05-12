@@ -462,7 +462,7 @@
                   <input type="hidden" name="company_country_id" id="company_country_id" value="<?=$company_setting->country_id?>">
                   <button type="submit" name="submit" id="purchase_returnReturnSubmit" class="btn btn-info"><?=$this->lang->line('purchase_return_save')?></button>
                   <!-- <button type="submit" name="submit" id="purchase_returnReturnSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase_return & Pay Now</button>                      -->
-                  <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_return_cancel')?></span>
+                  <span class="btn btn-default float-right" id="cancel" onclick="cancel('purchase_return')"><?=$this->lang->line('purchase_return_cancel')?></span>
                 </div>
             </form>
           </div>

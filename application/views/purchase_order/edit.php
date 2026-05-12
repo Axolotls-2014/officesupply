@@ -572,15 +572,7 @@
              value="<?=$purchase_order->additional_cost_amount?>" step="0.01">
     </td>
   </tr>
- <tr>
-    <td align="right" width="66%">
-      <strong>Total Discount (₹)</strong>
-    </td>
-    <td align='right' class="text-danger" width="34%">
-      - <span id="total_discount"><?=number_format($purchase_order->total_discount ?? 0, 2)?></span>
-      <input type="hidden" name="total_discount" id="t_discount" value="<?=$purchase_order->total_discount ?? 0?>">
-    </td>
-  </tr>
+
   <tr>
     <td align="right" width="66%">Total Taxable Value (₹)</td>
     <td align='right' class="text-success" width="34%">
@@ -658,7 +650,7 @@
                   <input type="hidden" name="company_country_id" id="company_country_id" value="<?=$company_setting->country_id?>">
                   <button type="submit" name="submit" id="purchaseOrderSubmit" class="btn btn-info"><?=$this->lang->line('purchase_order_add')?></button>
                   <!-- <button type="submit" name="submit" id="purchaseOrderSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase & Pay Now</button>                      -->
-                  <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_order_cancel')?></span>
+                  <span class="btn btn-default float-right" id="cancel" onclick="cancel('purchase_order')"><?=$this->lang->line('purchase_order_cancel')?></span>
                 </div>
             </form>
           </div>
@@ -1799,8 +1791,8 @@ function add_row(product, discounts) {
     cols += '<td class="text-right">'+input_quantity+'<\/td>';
     cols += '<td class="text-center">'+input_uom+'<\/td>';
     cols += '<td class="text-right">'
-            + '<input type="number" class="form-control text-right" name="price" step="0.01" value="'+(product.price || 0)+'">'
-            + '<input type="hidden" name="hidden_selling_price" value="'+(product.price || 0)+'">'
+            + '<input type="number" class="form-control text-right" name="selling_price" step="0.01" value="'+(product.selling_price || 0)+'">'
+            + '<input type="hidden" name="hidden_selling_price" value="'+(product.selling_price || 0)+'">'
             + '<\/td>';
     cols += '<td class="text-right">'
             + '<input type="number" class="form-control text-right" name="cost" step="0.01" value="'+product.cost+'">'
@@ -1819,7 +1811,148 @@ function add_row(product, discounts) {
 }
 
 
-   
+      /*function add_row2704(data)
+{
+  var supplier_country_id = $('#supplier_country_id').val();
+  var supplier_state_id   = $('#supplier_state_id').val();
+  var supplier_gstin      = $('#supplier_gstin').val();
+
+  var company_country_id  = $('#company_country_id').val();
+  var company_state_id    = $('#company_state_id').val();
+  var company_gstin       = '<?=$company_setting->gstin?>';
+
+  var product   = data.product;
+  var discounts = data.discount;
+ console.log('Full product data:', product);
+  // Build discount dropdown with proper formatting
+  var select_discount = "";
+  select_discount += '<select class="form-control select2bs4" name="item_discount" style="width: 100%;">';
+  select_discount += '<option value="">Select</option>';
+  for(a=0;a<discounts.length;a++)
+  {
+    var type_symbol;
+    if(discounts[a].type == 0)
+    {
+      type_symbol = "<?=$this->session->userdata('currency_symbol')?>";
+    }
+    else
+    {
+      type_symbol = "%"; 
+    }
+    select_discount += '<option value="' + discounts[a].id + '">' + discounts[a].name+' ('+discounts[a].value  + type_symbol +')'+ '</option>';
+  }
+  select_discount += '</select>'
+  select_discount += '<span name="span_discount_type" class="discount_type">Discount Value : <?=$this->session->userdata('currency_symbol');?> </span>';
+  select_discount += '<input type="hidden" name="discount_type" value="0">';
+  select_discount += '<span name="discount_amount" class="discount_amount">0.00</span>';
+  select_discount += '<input type="hidden" name="discount_value" value="0">';
+
+  var input_uom = '<input type="hidden" name="uom_id" value="'+product.uom_id+'" data-uom_name="'+product.uom_name+'" data-uom_uom="'+product.uom_uom+'">'+product.uom_uom;
+
+  var input_quantity = '<input type="number" class="form-control" name="quantity" value="1" step="0.01" min="0.01"><span name="quantity_update_message" class="quantity_update_message"></span>';
+  var taxable_value = '<span name="taxable_value">'+product.cost+'</span>';
+
+  var tax = '<input type="hidden" name="tax_id" value="'+product.tax_id+'">';
+
+  if(company_country_id == supplier_country_id)
+  {
+    if(company_state_id == supplier_state_id)
+    {
+      tax += 'CGST : <span name="c_tax">0.00</span> (<span name="cgst">'+product.cgst+'</span>%)<br/>';
+      tax += 'SGST : <span name="s_tax">0.00</span> (<span name="sgst">'+product.sgst+'</span>%)';
+      tax += '<span name="i_tax" style="display:none">0</span>';
+      tax += '<span name="igst" style="display:none">0</span>';
+    }
+    else
+    {
+      tax += 'IGST : <span name="i_tax">0.00</span> (<span name="igst">'+product.igst+'</span>%)<br/>';
+      tax += '<span name="c_tax" style="display:none">0</span>';
+      tax += '<span name="cgst" style="display:none">0</span>';
+      tax += '<span name="s_tax" style="display:none">0</span>';
+      tax += '<span name="sgst" style="display:none">0</span>';
+    }
+  }
+  else
+  {
+    tax += 'N/A';
+    tax += '<span name="i_tax" style="display:none">0</span>';
+    tax += '<span name="igst" style="display:none">0</span>';
+    tax += '<span name="c_tax" style="display:none">0</span>';
+    tax += '<span name="cgst" style="display:none">0</span>';
+    tax += '<span name="s_tax" style="display:none">0</span>';
+    tax += '<span name="sgst" style="display:none">0</span>';
+  }
+
+  var tax_type = '<input type="hidden" name="tax_type" value="'+product.tax_type+'">';
+  tax_type += (product.tax_type == 0) ? "No" : "Yes";
+
+  var newRow = $('<tr class="product_row">');
+  var cols = "";
+
+  // Get current row count for Sr.No
+  var rowCount = $("#product_table_body tr").length + 1;
+
+  cols += '<td class="text-center">'
+            + '<span class="delete_item"><i class="fas fa-minus-circle text-danger"></i></span>'
+            + '<input type="hidden" name="product_id" value="'+product.id+'">'
+            + '<input type="hidden" name="igst_rate" value="'+product.igst+'">'
+            + '<input type="hidden" name="cgst_rate" value="'+product.cgst+'">'
+            + '<input type="hidden" name="sgst_rate" value="'+product.sgst+'">'
+          +'</td>';
+          
+  // Sr.No column
+  cols += '<td class="text-center sr-no">' + rowCount + '</td>';
+  
+  // Product Name column
+  cols += '<td>'
+          + '<span name="product_name">'+product.name+'</span>'
+          + '<br/><small><span name="description">'+(product.description ? product.description : '')+'</span></small>'
+        +'</td>';
+        
+  // Add Remark column
+  cols += '<td><textarea name="product_remark" rows="1" cols="20"></textarea></td>';
+  
+  // HSN column
+  cols += '<td><span name="hsn">'+(product.hsn ? product.hsn : 'NA')+'</span></td>';
+  
+  // Purchase Qty column
+  cols += '<td>'+input_quantity+'</td>';
+  
+  // UOM column
+  cols += '<td>'+input_uom+'</td>';
+  
+  // Product MRP column (visible)
+  cols += '<td>'
+            +'<input type="number" class="form-control text-right" name="selling_price" step="0.01" value="'+product.selling_price+'">'
+            +'<input type="hidden" class="form-control text-right" name="hidden_selling_price" step="0.01" value="'+product.selling_price+'">'
+          +'</td>';
+  
+  // Price/Unit column (visible)
+  cols += '<td>'
+            +'<input type="number" class="form-control text-right" name="cost" step="0.01" value="'+product.cost+'" min="1">'
+            +'<input type="hidden" class="form-control text-right" name="hidden_cost" step="0.01" value="'+product.cost+'" min="1">'
+          +'</td>';
+  
+  // Discount column (visible)
+  cols += '<td>'+select_discount+'</td>';
+  
+  // Taxable Value column
+  cols += '<td>'+taxable_value+'</td>';
+  
+  // Tax column
+  cols += '<td class="tax_td">'+tax+'</td>';
+  
+  // Total Price column
+  cols += '<td><span name="subtotal"></span></td>';
+
+  newRow.append(cols);
+  $("table.product_table tbody#product_table_body").append(newRow);
+  $('.select2bs4').select2({theme: 'bootstrap4'});
+
+  // Calculate the row after adding
+  calculateRow(newRow);
+}
+*/
    
       function is_product_exist_in_row(product_id)
       {
@@ -2225,7 +2358,7 @@ function calculateGrandTotal() {
     $('#total').text(total.toFixed(2));
     $('#t').val(total.toFixed(2));
   }*/
-  /*06-05-2026 function calculateGrandTotal() {
+  function calculateGrandTotal() {
     var total_taxable_value = 0.0;
     var total_cgst = 0.0;
     var total_sgst = 0.0;
@@ -2261,56 +2394,6 @@ function calculateGrandTotal() {
     $('#total_taxable_value').text(total_taxable_value.toFixed(2));
     $('#t_taxable_value').val(total_taxable_value.toFixed(2));
 
-    $('#total_discount').text(total_discount.toFixed(2));
-    $('#t_discount').val(total_discount.toFixed(2));
-
-    $('#total_tax').text((total_cgst + total_sgst + total_igst).toFixed(2));
-    $('#t_tax').val((total_cgst + total_sgst + total_igst).toFixed(2));
-
-    $('#total').text(total.toFixed(2));
-    $('#t').val(total.toFixed(2));
-}*/
-function calculateGrandTotal() {
-    var total_taxable_value = 0.0;
-    var total_cgst = 0.0;
-    var total_sgst = 0.0;
-    var total_igst = 0.0;
-    var total = 0.0;
-    var total_discount = 0.0;
-    var freight_amount = 0.0;
-
-    $("#product_table_body").find('tr').each(function () {
-        var tr = $(this).closest("tr");
-        
-        if (tr.hasClass('freight-row')) {
-            // Get freight amount from the cost field
-            freight_amount = parseFloat(tr.find('.freight-amount').val()) || 0;
-            if (freight_amount === 0) {
-                freight_amount = parseFloat(tr.find('input[name="freight_cost"]').val()) || 0;
-            }
-            // Add freight only to Total, NOT to Taxable Value
-            total += freight_amount;
-        } else {
-            // Regular product row - add to all totals
-            total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text()) || 0;
-            
-            // Get discount amount - handle different formats
-            var discountText = tr.find('span[name^="discount_amount"]').text() || '0';
-            var discountAmount = parseFloat(discountText.replace('Discount:', '').replace('Discount: ', '').trim()) || 0;
-            total_discount += discountAmount;
-            
-            total_cgst += parseFloat(tr.find('span[name^="c_tax"]').text()) || 0;
-            total_sgst += parseFloat(tr.find('span[name^="s_tax"]').text()) || 0;
-            total_igst += parseFloat(tr.find('span[name^="i_tax"]').text()) || 0;
-            total += parseFloat(tr.find('span[name^="subtotal"]').text()) || 0;
-        }
-    });
-
-    // Update the totals display
-    $('#total_taxable_value').text(total_taxable_value.toFixed(2));
-    $('#t_taxable_value').val(total_taxable_value.toFixed(2));
-
-    // Update discount display
     $('#total_discount').text(total_discount.toFixed(2));
     $('#t_discount').val(total_discount.toFixed(2));
 

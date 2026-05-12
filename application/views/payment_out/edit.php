@@ -105,7 +105,7 @@
                                 <input type="hidden" name="action" id="form_action" value="update">
                                 <input type="hidden" name="payment_id" value="<?=base64_encode($payment_out->id)?>">
                                 <button type="submit" class="btn btn-primary">Update Payment</button>
-                                <a href="<?=base_url('payment_out')?>" onclick="window.history.back()" class="btn btn-default float-right">Cancel</a>
+                                <a href="<?=base_url('payment_out')?>" class="btn btn-default float-right">Cancel</a>
                             </div>
                         </div>
                     </form>

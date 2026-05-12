@@ -105,7 +105,7 @@
                                 <input type="hidden" name="action" id="form_action" value="save">
                                 <button type="button" class="btn btn-info" id="link_payment_btn">Link Payment</button>
                                 <!--<button type="submit" class="btn btn-primary">Save Payment</button>-->
-                                <a href="<?=base_url('payment_out')?>" onclick="window.history.back()" class="btn btn-default float-right">Cancel</a>
+                                <a href="<?=base_url('payment_out')?>" class="btn btn-default float-right">Cancel</a>
                             </div>
                         </div>
                     </form>
