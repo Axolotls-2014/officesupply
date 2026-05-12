@@ -516,6 +516,15 @@
             <input type="number" class="form-control" id="additional_cost_amount" name="additional_cost_amount" value="0" step="0.01">
           </td>
         </tr>
+          <tr>
+            <td align="right" width="66%">
+                <strong>Total Discount (₹)</strong>
+            </td>
+            <td align="right" class="text-danger" width="34%">
+                - <span id="total_discount">0.00</span>
+                <input type="hidden" name="total_discount" id="t_discount" value="0.00">
+            </td>
+        </tr>
         <tr>
           <td align="right" width="66%">Total Taxable Value (₹)</td>
           <td align='right' class="text-success" width="34%">
@@ -587,7 +596,7 @@
                   <button type="submit" name="submit" id="purchaseOrderSubmit" class="btn btn-info"><?=$this->lang->line('purchase_order_add')?></button>
                   <!-- <span class="text-sm">(<?=$this->lang->line('enter_shift')?>)</span> -->
                   <!-- <button type="submit" name="submit" id="purchaseOrderSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase & Pay Now</button>                      -->
-                  <span class="btn btn-default float-right" id="cancel" onclick="cancel('purchase_order')"><?=$this->lang->line('purchase_order_cancel')?></span>
+                  <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_order_cancel')?></span>
                 </div>
                 
             </form>
@@ -2047,8 +2056,8 @@ function add_row(product, discounts) {
     
     // Product MRP column
     cols += '<td class="text-right">'
-            + '<input type="number" class="form-control text-right item-mrp" name="selling_price" step="0.01" value="' + (product.selling_price || product.price || 0) + '" min="0">'
-            + '<input type="hidden" name="hidden_selling_price" value="' + (product.selling_price || product.price || 0) + '">'
+            + '<input type="number" class="form-control text-right item-mrp" name="selling_price" step="0.01" value="' + (product.price || 0) + '" min="0">'
+            + '<input type="hidden" name="hidden_selling_price" value="' + (product.price || 0) + '">'
             + '</td>';
     
     // Price/Unit column
@@ -2499,7 +2508,7 @@ function reindexSerialNumbers() {
     // Get values
     var quantity = parseFloat(row.find('input[name^="quantity"]').val()) || 0;
     var cost = parseFloat(row.find('input[name^="cost"]').val()) || 0;
-    var mrp = parseFloat(row.find('input[name^="selling_price"]').val()) || 0;
+    var mrp = parseFloat(row.find('input[name^="price"]').val()) || 0;
     
     // Calculate subtotal before discount
     var subtotal = quantity * cost;
@@ -2707,6 +2716,50 @@ function reindexSerialNumbers() {
     $('#t').val(total.toFixed(2));
 }*/
 function calculateGrandTotal() {
+    var total_taxable_value = 0.0;
+    var total_tax = 0.0;
+    var total = 0.0;
+    var freight_total = 0.0;
+    var total_discount = 0.0;  // New variable for discount
+
+    $("#product_table_body tr").each(function() {
+        var tr = $(this);
+        
+        if(tr.hasClass('freight-row')) {
+            // Get freight total from the total price column
+            var freightTotalText = tr.find('.freight-total-price').text();
+            freight_total = parseFloat(freightTotalText) || 0;
+            total += freight_total;
+        } else {
+            // Regular product rows
+            total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text()) || 0;
+            total_tax += (parseFloat(tr.find('span[name^="i_tax"]').text()) || 0) +
+                        (parseFloat(tr.find('span[name^="c_tax"]').text()) || 0) +
+                        (parseFloat(tr.find('span[name^="s_tax"]').text()) || 0);
+            
+            // Calculate discount from each product row
+            var discountSpanText = tr.find('span[name^="discount_amount"]').text();
+            var discountAmount = parseFloat(discountSpanText.replace('Discount:', '').replace('Discount: ', '').trim()) || 0;
+            total_discount += discountAmount;
+            
+            total += parseFloat(tr.find('span[name^="subtotal"]').text()) || 0;
+        }
+    });
+
+    // Update totals display
+    $('#total_discount').text(total_discount.toFixed(2));
+    $('#t_discount').val(total_discount.toFixed(2));
+    
+    $('#total_taxable_value').text(total_taxable_value.toFixed(2));
+    $('#t_taxable_value').val(total_taxable_value.toFixed(2));
+    
+    $('#total_tax').text(total_tax.toFixed(2));
+    $('#t_tax').val(total_tax.toFixed(2));
+    
+    $('#total').text(total.toFixed(2));
+    $('#t').val(total.toFixed(2));
+}
+function calculateGrandTotal0605() {
     var total_taxable_value = 0.0;
     var total_tax = 0.0;
     var total = 0.0;

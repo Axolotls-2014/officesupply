@@ -289,6 +289,33 @@ class Transaction_model extends CI_Model {
                          ->result();   
         return $data;
     }
+    
+    
+        public function get_all_purchase_payments($purchase_id)
+    {
+        $this->db->select('th.*, lf.title as from_ledger_title, lt.title as to_ledger_title');
+        $this->db->from('transaction_header th');
+        $this->db->join('ledger lf', 'lf.id = th.from_account', 'left');
+        $this->db->join('ledger lt', 'tl.id = th.to_account', 'left');
+    
+        $this->db->group_start();
+            // 1. Get payments made via the "Make Payment" shortcut (Module P)
+            $this->db->where('th.module', 'P');
+            $this->db->where('th.entry_id', $purchase_id);
+    
+            // 2. Get payments made via "Payment Out" menu (Module PO) 
+            // These are linked via the 'payment_out_distribution' table
+            $this->db->or_group_start();
+                $this->db->where('th.module', 'PO');
+                $this->db->where("th.entry_id IN (SELECT payment_out_id FROM payment_out_distribution WHERE purchase_id = " . $this->db->escape($purchase_id) . ")", NULL, FALSE);
+            $this->db->group_end();
+        $this->db->group_end();
+    
+        $this->db->order_by('th.voucher_date', 'DESC');
+        $this->db->order_by('th.transaction_id', 'DESC');
+        
+        return $this->db->get()->result();
+    }
 
     /*
         entry_id : id of specific entry in give module

@@ -915,7 +915,8 @@
         
 
         $.ajax({
-          url: "<?php echo base_url('transaction/add')?>",
+        //   url: "<?php echo base_url('transaction/add')?>",
+        url: "<?php echo base_url('transaction/add_purchase_payment')?>"
           type: "POST",
           data: transactionFormData,
           dataType: "JSON",

@@ -717,8 +717,8 @@
         <?=$row->uom_uom?>
       </td>
       <td class="text-right">
-        <input type="number" class="form-control text-right item-mrp" name="selling_price" step="0.01" value="<?=$row->selling_price?>" min="0">
-        <input type="hidden" name="hidden_selling_price" value="<?=$row->selling_price?>">
+        <input type="number" class="form-control text-right item-mrp" name="price" step="0.01" value="<?=$row->price?>" min="0">
+        <input type="hidden" name="hidden_selling_price" value="<?=$row->price?>">
       </td>
       <td class="text-right">
         <input type="number" class="form-control text-right item-cost" name="cost" step="0.01" value="<?=$row->cost?>" min="0">
@@ -813,6 +813,17 @@
     </td>
   </tr>
 
+<!-- DISCOUNT ROW - NEW -->
+  <tr>
+    <td align="right" width="66%">
+      <strong>Total Discount (₹)</strong>
+    </td>
+    <td align='right' class="text-danger" width="34%">
+      - <span id="total_discount"><?=number_format($purchase->total_discount ?? 0, 2)?></span>
+      <input type="hidden" name="total_discount" id="t_discount" value="<?=$purchase->total_discount ?? 0?>">
+    </td>
+  </tr>
+  
   <tr>
     <td align="right" width="66%">Total Taxable Value (₹)</td>
     <td align='right' class="text-success" width="34%">
@@ -890,7 +901,7 @@
                   <input type="hidden" name="company_country_id" id="company_country_id" value="<?=$company_setting->country_id?>">
                   <button type="submit" name="submit" id="PurchaseSubmit" class="btn btn-info"><?=$this->lang->line('purchase_add')?></button>
                   <!-- <button type="submit" name="submit" id="PurchaseSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase & Pay Now</button>                      -->
-                  <span class="btn btn-default float-right" id="cancel" onclick="cancel('purchase')"><?=$this->lang->line('purchase_cancel')?></span>
+                  <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_cancel')?></span>
                 </div>
             </form>
           </div>
@@ -1865,8 +1876,8 @@ function add_row(data)
   
   // Product MRP column
   cols += '<td class="text-right">'
-            +'<input type="number" class="form-control text-right item-mrp" name="selling_price" step="0.01" value="'+(product.selling_price || product.price || 0)+'" min="0">'
-            +'<input type="hidden" name="hidden_selling_price" value="'+(product.selling_price || product.price || 0)+'">'
+            +'<input type="number" class="form-control text-right item-mrp" name="price" step="0.01" value="'+( product.price || 0)+'" min="0">'
+            +'<input type="hidden" name="hidden_selling_price" value="'+(product.price || 0)+'">'
           +'</td>';
   
   // Price/Unit column
@@ -2175,7 +2186,7 @@ function add_row(data)
     // Get values
     var quantity = parseFloat(row.find('input[name^="quantity"]').val()) || 0;
     var cost = parseFloat(row.find('input[name^="cost"]').val()) || 0;
-    var mrp = parseFloat(row.find('input[name^="selling_price"]').val()) || 0;
+    var mrp = parseFloat(row.find('input[name^="price"]').val()) || 0;
     
     // Calculate subtotal before discount
     var subtotal = quantity * cost;
@@ -2273,6 +2284,7 @@ function add_row(data)
 }
 
 
+/* 06-05-2025 discount not show separate
 function calculateGrandTotal() {
     var total_taxable_value = 0.0;
     var total_cgst = 0.0;
@@ -2314,7 +2326,54 @@ function calculateGrandTotal() {
     $('#total').text(total.toFixed(2));
     $('#t').val(total.toFixed(2));
   }
+*/
+function calculateGrandTotal() {
+    var total_taxable_value = 0.0;
+    var total_cgst = 0.0;
+    var total_sgst = 0.0;
+    var total_igst = 0.0;
+    var total = 0.0;
+    var total_discount = 0.0;
+    var freight_amount = 0.0;
 
+    $("#product_table_body").find('tr').each(function () {
+      var tr = $(this).closest("tr");
+      
+      if (tr.hasClass('freight-row')) {
+        // Get freight amount from the cost field
+        freight_amount = parseFloat(tr.find('.freight-amount').val()) || 0;
+        total += freight_amount;
+        // DO NOT add freight to total_taxable_value
+      } else {
+        // Regular product row
+        total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text()) || 0;
+        
+        // Get discount amount correctly
+        var discountSpanText = tr.find('span[name^="discount_amount"]').text();
+        var discountAmount = parseFloat(discountSpanText.replace('Discount:', '').replace('Discount: ', '').trim()) || 0;
+        total_discount += discountAmount;
+        
+        total_cgst += parseFloat(tr.find('span[name^="c_tax"]').text()) || 0;
+        total_sgst += parseFloat(tr.find('span[name^="s_tax"]').text()) || 0;
+        total_igst += parseFloat(tr.find('span[name^="i_tax"]').text()) || 0;
+        total += parseFloat(tr.find('span[name^="subtotal"]').text()) || 0;
+      }
+    });
+
+    // Update the totals
+    $('#total_taxable_value').text(total_taxable_value.toFixed(2));
+    $('#t_taxable_value').val(total_taxable_value.toFixed(2));
+
+    // Update discount display
+    $('#total_discount').text(total_discount.toFixed(2));
+    $('#t_discount').val(total_discount.toFixed(2));
+
+    $('#total_tax').text((total_cgst + total_sgst + total_igst).toFixed(2));
+    $('#t_tax').val((total_cgst + total_sgst + total_igst).toFixed(2));
+
+    $('#total').text(total.toFixed(2));
+    $('#t').val(total.toFixed(2));
+}
 
 /* $('table.product_table').on('click', "span.delete_item", function(e){
     var tr = $(this).closest('tr');
@@ -2340,7 +2399,7 @@ function calculateGrandTotal() {
 });
 
 
-        $('#editPurchaseForm').submit(function(e){
+      /*06-05-2026 Discount store $('#editPurchaseForm').submit(function(e){
     var isError = false;
     $('#PurchaseSubmit').text('<?=$this->lang->line("please_wait")?>').attr('disabled','disabled');
 
@@ -2449,7 +2508,162 @@ function calculateGrandTotal() {
     } else {
       return true;
     }
-  });
+  });*/
+  $('#editPurchaseForm').submit(function(e){
+    var isError = false;
+    $('#PurchaseSubmit').text('<?=$this->lang->line("please_wait")?>').attr('disabled','disabled');
+
+    // Validate required fields
+    $('form#editPurchaseForm .field_validation').each(function() {
+        var id = $(this).attr('id');
+        var value = $(this).val();
+        var field = $(this).attr('placeholder');
+
+        if(value==null || value=="") {
+            $("form#editPurchaseForm #err_"+id).text(field+ " field is required.").fadeIn('slow');
+            $('form#editPurchaseForm #'+id).addClass('is-invalid');
+            isError = true;
+        } else {
+            $("form#editPurchaseForm #err_"+id).text("").fadeOut('slow');
+            $('form#editPurchaseForm #'+id).removeClass('is-invalid');
+            $('form#editPurchaseForm #'+id).addClass('is-valid');
+        }
+    });
+
+    // Prepare freight data
+    var freightData = {
+        'freight_amount': 0,
+        'freight_taxable_value': 0,
+        'freight_sub_total': 0,
+        'freight_remark': ''
+    };
+
+    // Check if freight row exists and get values
+    $(".freight-row").each(function() {
+        freightData = {
+            'freight_amount': parseFloat($(this).find('.freight-amount').val()) || 0,
+            'freight_taxable_value': parseFloat($(this).find('span[name="freight_taxable_value"]').text()) || 0,
+            'freight_sub_total': parseFloat($(this).find('span[name="freight_sub_total"]').text()) || 0,
+            'freight_remark': $(this).find('textarea[name="freight_remark"]').val()
+        };
+    });
+
+    // Add hidden field for freight data if it doesn't exist
+    if ($('#freight_data').length === 0) {
+        $('<input>').attr({
+            type: 'hidden',
+            id: 'freight_data',
+            name: 'freight_data'
+        }).appendTo('#editPurchaseForm');
+    }
+    $('#freight_data').val(JSON.stringify(freightData));
+
+    var productDataArray = [];
+
+    $("#product_table_body").find('tr').each(function () {
+        var tr = $(this).closest("tr");
+        if(tr.hasClass('freight-row')) return; // Skip freight row
+        
+        var productData = {};
+        
+        // Basic product information
+        productData['product_id'] = tr.find('input[name^="product_id"]').val();
+        productData['product_name'] = tr.find('span[name^="product_name"]').text();
+        productData['hsn'] = tr.find('span[name^="hsn"]').text();
+        productData['description'] = tr.find('span[name^="description"]').text();
+        
+        // Quantity and UOM
+        productData['quantity'] = tr.find('input[name^="quantity"]').val();
+        productData['uom_id'] = tr.find('input[name^="uom_id"]').val();
+        productData['uom_name'] = tr.find('input[name^="uom_id"]').data('uom_name');
+        productData['uom_uom'] = tr.find('input[name^="uom_id"]').data('uom_uom');
+        
+        // Pricing
+        productData['cost'] = tr.find('input[name^="cost"]').val();
+        productData['price'] = tr.find('input[name="price"]').val();
+        productData['selling_price'] = tr.find('input[name="selling_price"]').val();
+        
+        // Dates and remarks
+        productData['mfg_date'] = tr.find('input[name="mfg_date"]').val();
+        productData['expiry_date'] = tr.find('input[name="expiry_date"]').val();
+        productData['product_remark'] = tr.find('textarea[name="product_remark"]').val();
+        
+        // Taxable value
+        productData['taxable_value'] = tr.find('span[name^="taxable_value"]').text();
+        
+        // Discount information - CRITICAL FIX
+        productData['discount_id'] = tr.find('select[name^="item_discount"]').val();
+        productData['discount_type'] = tr.find('input[name^="discount_type"]').val();
+        productData['discount_value'] = tr.find('input[name^="discount_value"]').val();
+        
+        // IMPORTANT: Get discount amount correctly from the span
+        var discountSpan = tr.find('span[name^="discount_amount"]');
+        var discountSpanText = discountSpan.text();
+        var discountAmount = 0;
+        
+        if(discountSpanText && discountSpanText !== '') {
+            if(discountSpanText.indexOf('Discount:') !== -1) {
+                // Format: "Discount: 100.00"
+                discountAmount = parseFloat(discountSpanText.split(':')[1]) || 0;
+            } else {
+                // Format: "100.00" or just the number
+                discountAmount = parseFloat(discountSpanText) || 0;
+            }
+        }
+        
+        // Also check data attribute if exists
+        if(discountAmount === 0 && discountSpan.attr('data-discount-amount')) {
+            discountAmount = parseFloat(discountSpan.attr('data-discount-amount')) || 0;
+        }
+        
+        productData['discount_amount'] = discountAmount.toFixed(2);
+        
+        // Tax information
+        productData['tax_id'] = tr.find('input[name^="tax_id"]').val();
+        productData['tax_type'] = tr.find('input[name^="tax_type"]').val();
+        
+        // Tax rates
+        productData['igst_rate'] = tr.find('input[name^="igst_rate"]').val();
+        productData['cgst_rate'] = tr.find('input[name^="cgst_rate"]').val();
+        productData['sgst_rate'] = tr.find('input[name^="sgst_rate"]').val();
+        
+        // Tax amounts
+        productData['igst'] = tr.find('input[name^="igst_rate"]').val();
+        productData['igst_tax'] = tr.find('span[name^="i_tax"]').text();
+        productData['cgst'] = tr.find('input[name^="cgst_rate"]').val();
+        productData['cgst_tax'] = tr.find('span[name^="c_tax"]').text();
+        productData['sgst'] = tr.find('input[name^="sgst_rate"]').val();    
+        productData['sgst_tax'] = tr.find('span[name^="s_tax"]').text();
+        
+        // Subtotal
+        productData['subtotal'] = tr.find('span[name^="subtotal"]').text();
+
+        // Debug log to verify discount is being captured
+        console.log('Product:', productData['product_name'], 'Discount Amount:', productData['discount_amount']);
+        
+        productDataArray.push(JSON.stringify(productData));
+    });
+
+    if(productDataArray.length > 0) {
+        $('#purchase_items').val(productDataArray.join('|'));
+        
+        // Debug: Check what's being sent
+        console.log('Total Products:', productDataArray.length);
+        console.log('Purchase Items Value:', $('#purchase_items').val());
+    } else {
+        isError = true;
+        $('#emptyPurchaseItemWarningModal').modal('show');
+    }
+
+    if(isError == true) {
+        $('#PurchaseSubmit').text('<?=$this->lang->line("purchase_add")?>').removeAttr('disabled');
+        return false;
+    } else {
+        // Optional: Add a final debug alert to confirm discount is being sent
+        // alert('Form submitting with discounts. Check console for details.');
+        return true;
+    }
+});
 
       $("form#editPurchaseForm .field_validation").on("blur keyup change",  function (event){
         var id    = $(this).attr('id');

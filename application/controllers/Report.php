@@ -701,7 +701,8 @@ private function export_stock_movement_pdf($movements, $totals, $from_date, $to_
                         'val' => $row->closing_value
                     ];
                 }
-        
+                $report_data = array_reverse($report_data); 
+
                 // 5. Calculate footer Closing totals from the last known state of each product
                 foreach ($final_state_per_product as $final) {
                     $total_closing_quantity += $final['qty'];

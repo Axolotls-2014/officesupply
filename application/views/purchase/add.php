@@ -610,6 +610,16 @@
                         <input type="number" class="form-control" id="additional_cost_amount" name="additional_cost_amount" value="0" step="0.01">
                     </td>
                 </tr>
+                  <!-- DISCOUNT ROW - NEW -->
+        <tr>
+            <td align="right" width="66%">
+                <strong>Total Discount (₹)</strong>
+            </td>
+            <td align='right' class="text-danger" width="34%">
+                - <span id="total_discount">0.00</span>
+                <input type="hidden" name="total_discount" id="t_discount" value="0">
+            </td>
+        </tr>
                 <tr>
                     <td align="right" width="66%">Total Taxable Value (₹)</td>
                     <td align='right' class="text-success" width="34%">
@@ -696,7 +706,7 @@
                                 <!-- <span class="text-sm">(<?=$this->lang->line('enter_shift')?>)</span> -->
                                 <!-- <button type="submit" name="submit" id="purchaseSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase & Pay Now</button>                      -->
                                 <span class="btn btn-default float-right" id="cancel"
-                                    onclick="cancel('purchase')"><?=$this->lang->line('purchase_cancel')?></span>
+                                    onclick="window.history.back()"><?=$this->lang->line('purchase_cancel')?></span>
                             </div>
                     </form>
                 </div>
@@ -1905,8 +1915,8 @@ $(document).ready(function(e) {
     
     // Product MRP column
     cols += '<td class="text-right">'
-            + '<input type="number" class="form-control text-right item-mrp" name="selling_price" step="0.01" value="' + (product.selling_price || product.price || 0) + '" min="0">'
-            + '<input type="hidden" name="hidden_selling_price" value="' + (product.selling_price || product.price || 0) + '">'
+            + '<input type="number" class="form-control text-right item-mrp" name="price" step="0.01" value="' + (product.price || 0) + '" min="0">'
+            + '<input type="hidden" name="hidden_selling_price" value="' + (product.price || 0) + '">'
             + '</td>';
     
     // Price/Unit column
@@ -2477,17 +2487,20 @@ function calculateGrandTotal() {
             if (freight_amount === 0) {
                 freight_amount = parseFloat(tr.find('input[name="freight_cost"]').val()) || 0;
             }
-            // Add freight ONLY to final total, NOT to taxable value
+            // Add freight ONLY to final total
             total += freight_amount;
-            // DO NOT add freight to total_taxable_value
         } else {
-            // Regular product rows - add to all appropriate totals
+            // Regular product rows
             total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text()) || 0;
             total_tax += (parseFloat(tr.find('span[name^="i_tax"]').text()) || 0) +
                         (parseFloat(tr.find('span[name^="c_tax"]').text()) || 0) +
                         (parseFloat(tr.find('span[name^="s_tax"]').text()) || 0);
             total += parseFloat(tr.find('span[name^="subtotal"]').text()) || 0;
-            total_discount += parseFloat(tr.find('span[name^="discount_amount"]').text().replace('Discount: ', '')) || 0;
+            
+            // Calculate total discount - handle different formats
+            var discountSpanText = tr.find('span[name^="discount_amount"]').text();
+            var discountAmount = parseFloat(discountSpanText.replace('Discount:', '').replace('Discount: ', '').trim()) || 0;
+            total_discount += discountAmount;
         }
     });
 
@@ -2495,13 +2508,16 @@ function calculateGrandTotal() {
     $('#total_taxable_value').text(total_taxable_value.toFixed(2));
     $('#t_taxable_value').val(total_taxable_value.toFixed(2));
     
+    // Update discount display
+    $('#total_discount').text(total_discount.toFixed(2));
+    $('#t_discount').val(total_discount.toFixed(2));
+    
     $('#total_tax').text(total_tax.toFixed(2));
     $('#t_tax').val(total_tax.toFixed(2));
     
     $('#total').text(total.toFixed(2));
     $('#t').val(total.toFixed(2));
 }
-
     // Delete item handler
    /* $('table.product_table').on('click', "span.delete_item", function(e) {
         var tr = $(this).closest('tr');

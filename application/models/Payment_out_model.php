@@ -95,35 +95,85 @@ class Payment_out_model extends CI_Model {
     public function add_payment_distribution($data) {
         return $this->db->insert('payment_out_distribution', $data);
     }
+    
+    
+//     public function get_supplier_unpaid_invoices($supplier_id) {
+//     $sql = "SELECT 
+//                 p.id,
+//                 p.reference_no,
+//                 p.invoice_no,
+//                 p.purchase_date,
+//                 p.total,
+//                 COALESCE((
+//                     SELECT SUM(po.amount) 
+//                     FROM payment_out_distribution pod 
+//                     JOIN payment_out po ON po.id = pod.payment_out_id 
+//                     WHERE pod.purchase_id = p.id AND po.delete_status = 0
+//                 ), 0) as paid_amount
+//             FROM purchase p
+//             WHERE p.supplier_id = ? 
+//             AND p.delete_status = 0
+//             HAVING p.total > paid_amount
+//             ORDER BY p.purchase_date ASC";
+    
+//     $query = $this->db->query($sql, array($supplier_id));
+//     $invoices = $query->result();
+    
+//     // Calculate due amount for each invoice
+//     foreach($invoices as $invoice) {
+//         $invoice->due_amount = $invoice->total - $invoice->paid_amount;
+//     }
+    
+//     return $invoices;
+// }
+
     public function get_supplier_unpaid_invoices($supplier_id) {
-    $sql = "SELECT 
-                p.id,
-                p.reference_no,
-                p.invoice_no,
-                p.purchase_date,
-                p.total,
-                COALESCE((
-                    SELECT SUM(po.amount) 
-                    FROM payment_out_distribution pod 
-                    JOIN payment_out po ON po.id = pod.payment_out_id 
-                    WHERE pod.purchase_id = p.id AND po.delete_status = 0
-                ), 0) as paid_amount
-            FROM purchase p
-            WHERE p.supplier_id = ? 
-            AND p.delete_status = 0
-            HAVING p.total > paid_amount
-            ORDER BY p.purchase_date ASC";
-    
-    $query = $this->db->query($sql, array($supplier_id));
-    $invoices = $query->result();
-    
-    // Calculate due amount for each invoice
-    foreach($invoices as $invoice) {
-        $invoice->due_amount = $invoice->total - $invoice->paid_amount;
+        $sql = "SELECT 
+                    p.id,
+                    p.reference_no,
+                    p.invoice_no,
+                    p.purchase_date,
+                    p.total,
+                    /* Calculate Total Paid Amount */
+                    COALESCE((
+                        SELECT SUM(pod.amount) 
+                        FROM payment_out_distribution pod 
+                        JOIN payment_out po ON po.id = pod.payment_out_id 
+                        WHERE pod.purchase_id = p.id AND po.delete_status = 0
+                    ), 0) as paid_amount,
+                    /* Calculate Total Ordered Quantity */
+                    COALESCE((
+                        SELECT SUM(quantity) 
+                        FROM purchase_items 
+                        WHERE purchase_id = p.id
+                    ), 0) as total_ordered,
+                    /* Calculate Total Delivered Quantity */
+                    COALESCE((
+                        SELECT SUM(pdi.quantity) 
+                        FROM purchase_delivery_items pdi
+                        JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id
+                        WHERE pd.purchase_id = p.id
+                    ), 0) as total_delivered
+                FROM purchase p
+                WHERE p.supplier_id = ? 
+                AND p.delete_status = 0
+                HAVING 
+                    p.total > paid_amount 
+                    AND total_delivered >= total_ordered 
+                    AND total_ordered > 0
+                ORDER BY p.purchase_date ASC";
+        
+        $query = $this->db->query($sql, array($supplier_id));
+        $invoices = $query->result();
+        
+        // Calculate due amount for each invoice for the view
+        foreach($invoices as $invoice) {
+            $invoice->due_amount = $invoice->total - $invoice->paid_amount;
+        }
+        
+        return $invoices;
     }
-    
-    return $invoices;
-}
+
 
     public function get_supplier_unpaid_invoices2604($supplier_id) {
         $this->db->select('p.id, p.reference_no, p.purchase_date, p.total, 

@@ -1187,7 +1187,49 @@ private function delete_payment_record() {
     $invoices = $this->payment_out_model->get_supplier_unpaid_invoices($supplier_id);
     $due_amount = array_sum(array_column($invoices, 'due_amount'));
     echo json_encode(['due_amount' => $due_amount]);
-}*/public function get_supplier_due_amount() {
+}*/
+// public function get_supplier_due_amount() {
+//     $supplier_id = $this->input->post('supplier_id');
+    
+//     // Set JSON header
+//     $this->output->set_content_type('application/json');
+    
+//     if(empty($supplier_id)) {
+//         echo json_encode(['due_amount' => 0]);
+//         return;
+//     }
+    
+//     // Get total purchases amount (using 'total' column)
+//     $query = $this->db->query("
+//         SELECT SUM(total) as total_purchases 
+//         FROM purchase 
+//         WHERE supplier_id = " . (int)$supplier_id . " 
+//         AND delete_status = 0
+//     ");
+    
+//     $total_purchases = $query->row()->total_purchases ?? 0;
+    
+//     // Get total payments made to this supplier
+//     $payment_query = $this->db->query("
+//         SELECT SUM(amount) as total_payments 
+//         FROM payment_out 
+//         WHERE supplier_id = " . (int)$supplier_id
+//     );
+    
+//     $total_payments = $payment_query->row()->total_payments ?? 0;
+    
+//     // Calculate due amount
+//     $due_amount = max(0, $total_purchases - $total_payments);
+    
+//     echo json_encode([
+//         'due_amount' => $due_amount,
+//         'total_purchases' => $total_purchases,
+//         'total_payments' => $total_payments,
+//         'status' => 'success'
+//     ]);
+// }
+
+public function get_supplier_due_amount() {
     $supplier_id = $this->input->post('supplier_id');
     
     // Set JSON header
@@ -1198,33 +1240,34 @@ private function delete_payment_record() {
         return;
     }
     
-    // Get total purchases amount (using 'total' column)
-    $query = $this->db->query("
-        SELECT SUM(total) as total_purchases 
-        FROM purchase 
-        WHERE supplier_id = " . (int)$supplier_id . " 
-        AND delete_status = 0
-    ");
+    /**
+     * FIX: Use the model function that already filters by 
+     * 'Successfully Delivered' (total_delivered >= total_ordered)
+     */
+    $delivered_invoices = $this->payment_out_model->get_supplier_unpaid_invoices($supplier_id);
     
-    $total_purchases = $query->row()->total_purchases ?? 0;
+    $total_due = 0;
+    if (!empty($delivered_invoices)) {
+        foreach ($delivered_invoices as $invoice) {
+            // due_amount is calculated inside the model function
+            $total_due += (float)$invoice->due_amount;
+        }
+    }
     
-    // Get total payments made to this supplier
+    // Optional: If you still need the total payments for debug/info
     $payment_query = $this->db->query("
         SELECT SUM(amount) as total_payments 
         FROM payment_out 
-        WHERE supplier_id = " . (int)$supplier_id
+        WHERE supplier_id = " . (int)$supplier_id . " 
+        AND delete_status = 0"
     );
-    
     $total_payments = $payment_query->row()->total_payments ?? 0;
-    
-    // Calculate due amount
-    $due_amount = max(0, $total_purchases - $total_payments);
-    
+
     echo json_encode([
-        'due_amount' => $due_amount,
-        'total_purchases' => $total_purchases,
+        'due_amount' => $total_due,
         'total_payments' => $total_payments,
-        'status' => 'success'
+        'status' => 'success',
+        'message' => 'Showing due for delivered items only'
     ]);
 }
 

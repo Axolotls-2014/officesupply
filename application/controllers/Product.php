@@ -139,6 +139,8 @@ public function export_csv()
 		
 		print_r(json_encode($data,true));
 	}
+	
+	
 	public function index()
 	{
 		if(!$this->permission_model->has_permission('list_product'))

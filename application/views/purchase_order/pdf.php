@@ -298,7 +298,7 @@
             <div>
                 <strong>Sub Total:</strong> 
                 <span style="float:right;">
-                    ₹ <?= number_format_i($purchase_order->total_taxable_value + $total_discount); ?>
+                    ₹ <?= number_format_i($purchase_order->total_taxable_value); ?>
                 </span>
             </div>
             

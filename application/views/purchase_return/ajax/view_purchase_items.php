@@ -58,6 +58,10 @@
             <input type="hidden" name="batch_no" value="<?=$item->batch_no?>">
             <input type="hidden" name="free_quantity" value="<?=$item->free_quantity?>">
             <input type="hidden" name="purchase_item_id" value="<?=$item->id?>">
+            <input type="hidden" name="discount_id" value="<?php echo $item->discount_id; ?>">
+            <input type="hidden" name="discount_type" value="<?php echo $item->discount_type; ?>">
+            <input type="hidden" name="discount_value" value="<?php echo $item->discount_value; ?>">
+            <input type="hidden" name="discount_amount" value="<?php echo $item->discount_amount; ?>">
           </td>
           <td><?=$item->product_name?></td>
           <td><?=number_format($item->cost, 2)?></td>
