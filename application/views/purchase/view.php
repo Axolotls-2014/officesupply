@@ -67,9 +67,9 @@
             </div>
             <div class="card-body">
               <?php if($this->permission_model->has_permission('manage_transaction')): ?>
-                <a href="#" data-target="#transaction-modal" data-toggle="modal" class="btn bg-purple btn-sm mr-1" data-tt="tooltip" title="Enter Payment" data-purchase_id="<?=$purchase->id?>"> 
-                  <i class="fas fa-rupee-sign"></i> Make Payment
-                </a>  
+                <!--<a href="#" data-target="#transaction-modal" data-toggle="modal" class="btn bg-purple btn-sm mr-1" data-tt="tooltip" title="Enter Payment" data-purchase_id="<?=$purchase->id?>"> -->
+                <!--  <i class="fas fa-rupee-sign"></i> Make Payment-->
+                <!--</a>  -->
               <?php endif; ?>
 
               <?php if($this->permission_model->has_permission('manage_purchase_delivery')): ?>
@@ -1421,7 +1421,8 @@ footer {
         
 
         $.ajax({
-          url: "<?php echo base_url('transaction/add')?>",
+        //   url: "<?php echo base_url('transaction/add')?>",
+        url: "<?php echo base_url('transaction/add_purchase_payment')?>",
           type: "POST",
           data: transactionFormData,
           dataType: "JSON",

@@ -656,7 +656,8 @@
                   <input type="hidden" name="company_state_id" id="company_state_id" value="<?=$company_setting->state_id?>">
                   <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                   <input type="hidden" name="company_country_id" id="company_country_id" value="<?=$company_setting->country_id?>">
-                  <button type="submit" name="submit" id="purchaseOrderSubmit" class="btn btn-info"><?=$this->lang->line('purchase_order_add')?></button>
+                  <!--<button type="submit" name="submit" id="purchaseOrderSubmit" class="btn btn-info"><?=$this->lang->line('purchase_order_add')?></button>-->
+                  <button type="submit" name="submit" id="purchaseOrderSubmit" class="btn btn-info">Update Purchase Order</button>
                   <!-- <button type="submit" name="submit" id="purchaseOrderSubmitPayNow" value="pay" name="pay" class="btn btn-info">Add purchase & Pay Now</button>                      -->
                   <span class="btn btn-default float-right" id="cancel" onclick="window.history.back()"><?=$this->lang->line('purchase_order_cancel')?></span>
                 </div>
@@ -2498,7 +2499,8 @@ function reindexSerialNumbers() {
     }
 
     if(isError == true) {
-      $('#purchaseOrderSubmit').text('<?=$this->lang->line("purchase_add")?>').removeAttr('disabled');
+    //   $('#purchaseOrderSubmit').text('<?=$this->lang->line("purchase_add")?>').removeAttr('disabled');
+      $('#purchaseOrderSubmit').text('Update Purchase Order').removeAttr('disabled');
       return false;
     } else {
       return true;

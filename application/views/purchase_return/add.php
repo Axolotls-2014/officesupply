@@ -1096,8 +1096,13 @@ $(document).ready(function(e) {
 
 function add_row(data, return_quantity = null, free_quantity = null, purchased_quantity = null,
     delivered_quantity = null, product_name = null, description = null, cost = null, price = null,
-    batch_no = null, selling_price = null) {
-
+    batch_no = null, selling_price = null, discount_id = '', d_type = '0', d_value = '0', d_amount = '0.00') {
+    console.log("===== Discount Debug =====");
+    console.log("discount_id :", discount_id);
+    console.log("d_type      :", d_type);
+    console.log("d_value     :", d_value);
+    console.log("d_amount    :", d_amount);
+    console.log("==========================");
     var supplier_country_id = $('#supplier_country_id').val();
     var supplier_state_id = $('#supplier_state_id').val();
 
@@ -1114,22 +1119,49 @@ function add_row(data, return_quantity = null, free_quantity = null, purchased_q
     // Calculate max quantity (purchased - delivered)
     var max_qty = (purchased_quantity && delivered_quantity) ? (purchased_quantity - delivered_quantity) : 999999;
     
-    var select_discount = "";
-    select_discount += '<select class="form-control select2bs4" name="item_discount" style="width: 100%;">';
+    // var select_discount = "";
+    // select_discount += '<select class="form-control select2bs4" name="item_discount" style="width: 100%;">';
+    // select_discount += '<option value="">Select</option>';
+    // for (a = 0; a < discounts.length; a++) {
+    //     var type_symbol;
+    //     if (discounts[a].type == 0) {
+    //         type_symbol = "<?=$this->session->userdata('currency_symbol')?>";
+    //     } else {
+    //         type_symbol = "%";
+    //     }
+    //     select_discount += '<option value="' + discounts[a].id + '">' + discounts[a].name + '(' + discounts[a].value + type_symbol + ')' + '</option>';
+    // }
+    // select_discount += '</select>'
+    // select_discount += '<span name="span_discount_type" class="discount_type">Discount Value :  <?=$this->session->userdata('currency_symbol');?> </span><input type="hidden" name="discount_type" value="0">';
+    // select_discount += '<span name="discount_amount" class="discount_amount">0.0</span><input type="hidden" name="discount_value" value="0">';
+    
+    // var select_discount = '<select class="form-control select2bs4" name="item_discount" style="width: 100%;">';
+    // select_discount += '<option value="">Select</option>';
+    // for (a = 0; a < discounts.length; a++) {
+    //     var selected = (discounts[a].id == discount_id) ? "selected" : ""; // Select original discount
+    //     var type_symbol = (discounts[a].type == 0) ? "<?=$currency?>" : "%";
+    //     select_discount += '<option value="' + discounts[a].id + '" ' + selected + '>' + discounts[a].name + '(' + discounts[a].value + type_symbol + ')</option>';
+    // }
+    // select_discount += '</select>';
+    
+    // // Set the hidden values so calculateRow works
+    // select_discount += '<input type="hidden" name="discount_type" value="' + d_type + '">';
+    // select_discount += '<input type="hidden" name="discount_value" value="' + d_value + '">';
+    // select_discount += '<span name="discount_amount" class="discount_amount d-none">' + d_amount + '</span>';
+    
+    var select_discount = '<div class="d-none">'; 
+    select_discount += '<select name="item_discount">';
     select_discount += '<option value="">Select</option>';
     for (a = 0; a < discounts.length; a++) {
-        var type_symbol;
-        if (discounts[a].type == 0) {
-            type_symbol = "<?=$this->session->userdata('currency_symbol')?>";
-        } else {
-            type_symbol = "%";
-        }
-        select_discount += '<option value="' + discounts[a].id + '">' + discounts[a].name + '(' + discounts[a].value + type_symbol + ')' + '</option>';
+        var selected = (discounts[a].id == discount_id) ? "selected" : "";
+        select_discount += '<option value="' + discounts[a].id + '" ' + selected + '>' + discounts[a].name + '</option>';
     }
-    select_discount += '</select>'
-    select_discount += '<span name="span_discount_type" class="discount_type">Discount Value :  <?=$this->session->userdata('currency_symbol');?> </span><input type="hidden" name="discount_type" value="0">';
-    select_discount += '<span name="discount_amount" class="discount_amount">0.0</span><input type="hidden" name="discount_value" value="0">';
-
+    select_discount += '</select>';
+    select_discount += '<input type="hidden" name="discount_type" value="' + d_type + '">';
+    select_discount += '<input type="hidden" name="discount_value" value="' + d_value + '">';
+    select_discount += '<span name="discount_amount" class="discount_amount">' + d_amount + '</span>';
+    select_discount += '</div>';
+    
     var input_uom = '<input type="hidden" name="uom_id" value="' + product.uom_id + '" data-uom_name="' + product.uom_name + '" data-uom_uom="' + product.uom_uom + '">' + product.uom_uom;
 
     // FIXED: Set the quantity input with proper value and max attribute
@@ -1180,7 +1212,7 @@ function add_row(data, return_quantity = null, free_quantity = null, purchased_q
         '<input type="number" class="form-control text-right" name="cost" step="0.01" value="' + (cost || product.cost || 0) + '" min="0.01">' +
         '<input type="hidden" name="selling_price" value="' + (selling_price || 0) + '">' +
         '<input type="hidden" name="price" value="' + (price || 0) + '">' +
-        '</span>' +
+        '</span>' + select_discount  + 
         '</td>';
     cols += '<td>' + input_uom + '</td>';
     cols += '<td>' + taxable_value + '</td>';
@@ -1396,7 +1428,9 @@ function add_row(data, return_quantity = null, free_quantity = null, purchased_q
     } else {
         final_discount = (taxable_value_before_discount * discount_value) / 100; // Percentage discount
     }
-    
+     console.log("--- ROW CALCULATION ---");
+    console.log("Qty: " + quantity + " | Cost: " + cost);
+    console.log("Disc Value: " + discount_value + " | Calc Discount: " + final_discount);
     // Taxable value after discount
     var taxable_value = taxable_value_before_discount - final_discount;
     
@@ -2236,6 +2270,8 @@ $('#view_purchase_detail_modal').on('hidden.bs.modal', function() {
     });*/
 // Remove the old shown.bs.modal event handler and replace with this
 $('#view_purchase_detail_modal').on('hide.bs.modal', function (e) {
+        console.log("--- MODAL CLOSING: TRANSFERRING DATA ---");
+
     var existing_product_array = new Array();
 
     $("#existing_purchase_items").find('tr').each(function () {
@@ -2255,6 +2291,12 @@ $('#view_purchase_detail_modal').on('hide.bs.modal', function (e) {
             var batch_no                = tr.find('input[name="batch_no"]').val();
             var free_quantity           = tr.find('input[name="free_quantity"]').val();
             
+            var discount_id         = tr.find('input[name="discount_id"]').val();
+            var discount_type       = tr.find('input[name="discount_type"]').val();
+            var discount_value      = tr.find('input[name="discount_value"]').val();
+            var discount_amount     = tr.find('input[name="discount_amount"]').val();
+            console.log("Product: " + product_name);
+            console.log("Detected Discount - ID: " + discount_id + " | Value: " + discount_value + " | Type: " + discount_type + " | amout: " + discount_amount);
             // Validate return quantity
             if(!return_quantity || return_quantity == 0) {
                 Swal.fire({
@@ -2281,9 +2323,13 @@ $('#view_purchase_detail_modal').on('hide.bs.modal', function (e) {
 
                     if(!is_product_exist_in_row(product.id, batch_no))
                     {
-                        add_row(data, return_quantity, free_quantity, purchased_quantity, 
-                                delivered_quantity, product_name, description, cost, 
-                                price, batch_no, selling_price);
+                        // add_row(data, return_quantity, free_quantity, purchased_quantity, 
+                        //         delivered_quantity, product_name, description, cost, 
+                        //         price, batch_no, selling_price);
+                        add_row(data, return_quantity, null, purchased_quantity, 
+                                delivered_quantity, product_name, null, cost, 
+                                null, batch_no, null, 
+                                discount_id, discount_type, discount_value, discount_amount);
                     }
                     else
                     {

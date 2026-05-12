@@ -1154,6 +1154,35 @@ public function purchase_report($from_date = null, $to_date = null, $supplier_id
 
     //   return  $query;
     // }
+    //working right 
+    // function purchase_return_report($from_date = null, $to_date = null, $supplier_id = null, $warehouse_id = null)
+    // {
+    //     $this->db->select('
+    //         p.purchase_return_date as date,
+    //         p.reference_no as invoice_no,
+    //         p.internal_note as remarks,
+    //         p.id as return_id,
+    //         sp.company_name as party_name,
+    //         w.name as branch_name,
+    //         pri.product_name,
+    //         pri.quantity as qty,
+    //         pri.cost as rate,
+    //         pri.subtotal as amount
+    //     ');
+    //     $this->db->from('purchase_return p');
+    //     $this->db->join('purchase_return_items pri', 'pri.purchase_return_id = p.id');
+    //     $this->db->join('supplier sp', 'sp.id = p.supplier_id', 'left');
+    //     $this->db->join('warehouse w', 'w.id = p.warehouse_id', 'left');
+    
+    //     if (!empty($supplier_id)) $this->db->where('p.supplier_id', $supplier_id);
+    //     if (!empty($warehouse_id)) $this->db->where('p.warehouse_id', $warehouse_id);
+    //     if (!empty($from_date)) $this->db->where('p.purchase_return_date >=', $from_date);
+    //     if (!empty($to_date)) $this->db->where('p.purchase_return_date <=', $to_date);
+    
+    //     $this->db->where('p.delete_status', 0);
+    //     $this->db->order_by('p.purchase_return_date', 'DESC');
+    //     return $this->db->get();
+    // }
     
     function purchase_return_report($from_date = null, $to_date = null, $supplier_id = null, $warehouse_id = null)
     {
@@ -1171,15 +1200,34 @@ public function purchase_report($from_date = null, $to_date = null, $supplier_id
         ');
         $this->db->from('purchase_return p');
         $this->db->join('purchase_return_items pri', 'pri.purchase_return_id = p.id');
+        
+        /** 
+         * 🔥 THE FIX: INNER JOIN with Delivery table.
+         * This ensures only returns with a completed delivery record appear.
+         */
+        $this->db->join('purchase_return_delivery prd', 'prd.purchase_return_id = p.id', 'inner');
+        
         $this->db->join('supplier sp', 'sp.id = p.supplier_id', 'left');
         $this->db->join('warehouse w', 'w.id = p.warehouse_id', 'left');
     
-        if (!empty($supplier_id)) $this->db->where('p.supplier_id', $supplier_id);
-        if (!empty($warehouse_id)) $this->db->where('p.warehouse_id', $warehouse_id);
-        if (!empty($from_date)) $this->db->where('p.purchase_return_date >=', $from_date);
-        if (!empty($to_date)) $this->db->where('p.purchase_return_date <=', $to_date);
+        if (!empty($supplier_id)) {
+            $this->db->where('p.supplier_id', $supplier_id);
+        }
+        if (!empty($warehouse_id)) {
+            $this->db->where('p.warehouse_id', $warehouse_id);
+        }
+        if (!empty($from_date)) {
+            $this->db->where('p.purchase_return_date >=', $from_date);
+        }
+        if (!empty($to_date)) {
+            $this->db->where('p.purchase_return_date <=', $to_date);
+        }
     
         $this->db->where('p.delete_status', 0);
+        
+        // Group by item ID to prevent duplicates if there are multiple partial deliveries
+        $this->db->group_by('pri.id'); 
+        
         $this->db->order_by('p.purchase_return_date', 'DESC');
         return $this->db->get();
     }
@@ -3025,8 +3073,8 @@ public function get_stock_movement_summary($from_date = null, $to_date = null, $
                 SELECT 
                     prd.delivery_date AS transaction_date,
                     'PURCHASE RETURN' AS transaction_type,
-                    pr.id AS product_id,
-                    pr.name AS product_name,
+                    prdi.product_id AS product_id,
+                    pr.name AS product_name, -- Assuming product name is in your join or product table
                     w.id AS warehouse_id,
                     w.name AS branch_name,
                     0 AS in_qty,
@@ -3265,7 +3313,21 @@ public function get_alert_qty($product_id = null)
             UNION ALL
 
             /* 5. Purchase Return */
-            SELECT pr.purchase_return_date as date, 'Purch Return', pr.reference_no, pri.product_id, 0, pri.quantity, 0, 0, pr.warehouse_id, pri.cost as tran_unit_cost FROM purchase_return_items pri JOIN purchase_return pr ON pr.id = pri.purchase_return_id WHERE pr.delete_status = 0
+            SELECT 
+                prd.delivery_date as date, 
+                'Purch Return' as type, 
+                pr.reference_no as ref_no, 
+                prdi.product_id, 
+                0 as in_qty, 
+                prdi.quantity as out_qty, 
+                0 as pur_amt, 
+                0 as sale_amt, 
+                pr.warehouse_id, 
+                prdi.cost as tran_unit_cost 
+            FROM purchase_return_delivery_items prdi 
+            JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+            JOIN purchase_return pr ON pr.id = prd.purchase_return_id 
+            WHERE pr.delete_status = 0
         ) as m
         JOIN product p ON p.id = m.product_id
         /* 🔥 THE BIG FIX: Use LEFT JOIN so rows aren't hidden if branch ID is 0 or null */
@@ -3291,7 +3353,7 @@ public function get_opening_stock_before_date($date, $product_id, $warehouse_id 
         UNION ALL
         SELECT sri.quantity, 0, sr.warehouse_id, sri.product_id, sr.sales_return_date FROM sales_return_items sri JOIN sales_return sr ON sr.id = sri.sales_return_id WHERE sr.delete_status = 0
         UNION ALL
-        SELECT 0, pri.quantity, pr.warehouse_id, pri.product_id, pr.purchase_return_date FROM purchase_return_items pri JOIN purchase_return pr ON pr.id = pri.purchase_return_id WHERE pr.delete_status = 0
+        SELECT 0, prdi.quantity, pr.warehouse_id, prdi.product_id, prd.delivery_date FROM purchase_return_delivery_items prdi JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
         UNION ALL
         /* 🔥 ADD INITIAL STOCK FROM PRODUCT ADDITION */
         SELECT quantity as in_qty, 0 as out_qty, warehouse_id, product_id, DATE(created_date) as d FROM warehouse_products

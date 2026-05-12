@@ -5,48 +5,61 @@ class Purchase_return_model extends CI_Model {
 
     var $table = 'purchase_return_view';
 
+    // var $column_order = array(
+    //                             'id',
+    //                             'reference_no',
+    //                             'invoice_no',
+    //                             'purchase_return_date',
+    //                             'warehouse_id',
+    //                             'supplier_id',
+    //                             'supplier_gstin',
+    //                             'total_taxable_value',
+    //                             'total_discount',
+    //                             'total_tax',
+    //                             'total',
+    //                             'internal_note',
+    //                             'external_note',
+    //                             'terms_and_condition',
+    //                             'delete_status',
+    //                             'user_id',
+    //                             'created_date',
+    //                             'company_name',
+    //                             'name'
+    //                         ); //set column field database for datatable orderable
+    // var $column_search = array(
+    //                             'id',
+    //                             'reference_no',
+    //                             'invoice_no',
+    //                             'purchase_return_date',
+    //                             'warehouse_id',
+    //                             'supplier_id',
+    //                             'supplier_gstin',
+    //                             'total_taxable_value',
+    //                             'total_discount',
+    //                             'total_tax',
+    //                             'total',
+    //                             'internal_note',
+    //                             'external_note',
+    //                             'terms_and_condition',
+    //                             'delete_status',
+    //                             'user_id',
+    //                             'created_date',
+    //                             'company_name',
+    //                             'name'
+    //                         ); //set column field database for datatable searchable 
+    
     var $column_order = array(
-                                'id',
-                                'reference_no',
-                                'invoice_no',
-                                'purchase_return_date',
-                                'warehouse_id',
-                                'supplier_id',
-                                'supplier_gstin',
-                                'total_taxable_value',
-                                'total_discount',
-                                'total_tax',
-                                'total',
-                                'internal_note',
-                                'external_note',
-                                'terms_and_condition',
-                                'delete_status',
-                                'user_id',
-                                'created_date',
-                                'company_name',
-                                'name
-                            '); //set column field database for datatable orderable
+    'id', 'reference_no', 'invoice_no', 'purchase_return_date', 
+    'warehouse_id', 'supplier_id', 'total_taxable_value', 
+    'total_discount', 'total_tax', 'total', 'name', 'company_name'
+    ); 
+    
     var $column_search = array(
-                                'id',
-                                'reference_no',
-                                'invoice_no',
-                                'purchase_return_date',
-                                'warehouse_id',
-                                'supplier_id',
-                                'supplier_gstin',
-                                'total_taxable_value',
-                                'total_discount',
-                                'total_tax',
-                                'total',
-                                'internal_note',
-                                'external_note',
-                                'terms_and_condition',
-                                'delete_status',
-                                'user_id',
-                                'created_date',
-                                'company_name',
-                                'name'
-                            ); //set column field database for datatable searchable 
+        'id', 'reference_no', 'invoice_no', 'purchase_return_date', 
+        'name', 'company_name'
+    ); 
+
+
     var $order = array('id' => 'desc'); // default order 
 
     function __construct() {
@@ -435,48 +448,88 @@ class Purchase_return_model extends CI_Model {
 
         /************************************ Start Dynamic Datatable function ***********************************/
 
-    private function _get_datatables_query()
-    {
-       /* $this->db->select*/
-     //   $this->db->from($this->table);
- $this->db->select('pr.*, w.name as warehouse_name, s.company_name');
-    $this->db->from($this->table . ' pr');
-    $this->db->join('warehouse w', 'w.id = pr.warehouse_id', 'left');
-    $this->db->join('supplier s', 's.id = pr.supplier_id', 'left');
-    $this->db->where('pr.delete_status', 0);
-        $i = 0;
+//     private function _get_datatables_query()
+//     {
+//       /* $this->db->select*/
+//      //   $this->db->from($this->table);
+//  $this->db->select('pr.*, w.name as warehouse_name, s.company_name');
+//     $this->db->from($this->table . ' pr');
+//     $this->db->join('warehouse w', 'w.id = pr.warehouse_id', 'left');
+//     $this->db->join('supplier s', 's.id = pr.supplier_id', 'left');
+//     $this->db->where('pr.delete_status', 0);
+//         $i = 0;
      
-        foreach ($this->column_search as $item) // loop column 
-        {
-            if($_POST['search']['value']) // if datatable send POST for search
-            {
+//         foreach ($this->column_search as $item) // loop column 
+//         {
+//             if($_POST['search']['value']) // if datatable send POST for search
+//             {
                  
-                if($i===0) // first loop
-                {
-                    $this->db->group_start(); // open bracket. query Where with OR clause better with bracket. because maybe can combine with other WHERE with AND.
-                    $this->db->like($item, $_POST['search']['value']);
-                }
-                else
-                {
-                    $this->db->or_like($item, $_POST['search']['value']);
-                }
+//                 if($i===0) // first loop
+//                 {
+//                     $this->db->group_start(); // open bracket. query Where with OR clause better with bracket. because maybe can combine with other WHERE with AND.
+//                     $this->db->like($item, $_POST['search']['value']);
+//                 }
+//                 else
+//                 {
+//                     $this->db->or_like($item, $_POST['search']['value']);
+//                 }
  
-                if(count($this->column_search) - 1 == $i) //last loop
-                    $this->db->group_end(); //close bracket
-            }
-            $i++;
-        }
+//                 if(count($this->column_search) - 1 == $i) //last loop
+//                     $this->db->group_end(); //close bracket
+//             }
+//             $i++;
+//         }
          
-        if(isset($_POST['order'])) // here order processing
+//         if(isset($_POST['order'])) // here order processing
+//         {
+//             $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
+//         } 
+//         else if(isset($this->order))
+//         {
+//             $order = $this->order;
+//             $this->db->order_by(key($order), $order[key($order)]);
+//         }
+//     }
+
+
+private function _get_datatables_query()
+{
+    // Simple select from the view, just like your Purchase model
+    $this->db->select('pr.*');
+    $this->db->from($this->table . ' pr');
+
+    $i = 0;
+    foreach ($this->column_search as $item) 
+    {
+        if($_POST['search']['value']) 
         {
-            $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-        } 
-        else if(isset($this->order))
-        {
-            $order = $this->order;
-            $this->db->order_by(key($order), $order[key($order)]);
+            if($i===0) 
+            {
+                $this->db->group_start(); 
+                $this->db->like($item, $_POST['search']['value']);
+            }
+            else
+            {
+                $this->db->or_like($item, $_POST['search']['value']);
+            }
+
+            if(count($this->column_search) - 1 == $i) 
+                $this->db->group_end(); 
         }
+        $i++;
     }
+     
+    if(isset($_POST['order'])) 
+    {
+        $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
+    } 
+    else if(isset($this->order))
+    {
+        $order = $this->order;
+        $this->db->order_by(key($order), $order[key($order)]);
+    }
+}
+
  
     function get_datatables()
     {
