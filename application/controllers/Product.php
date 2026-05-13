@@ -1347,120 +1347,121 @@ else {
    
     echo json_encode($output);
 }
-// public function ajax_list()
-// {
-//     $list = $this->product_model->get_datatables();
-//     $data = array();
-//     $no = $_POST['start'];
+public function ajax_list()
+{
+    $list = $this->product_model->get_datatables();
+    $data = array();
+    $no = $_POST['start'];
 
-//     foreach ($list as $item){  
+    foreach ($list as $item){  
         
-//         /* Begin Action column buttons*/
-//         $table_header = '<div class="btn-group">';
-//         $table_footer = '</div>';
-//         $table_body = '';
+        /* Begin Action column buttons*/
+        $table_header = '<div class="btn-group">';
+        $table_footer = '</div>';
+        $table_body = '';
 
-//         // Edit Button        
-//         if($this->permission_model->has_permission('edit_product'))
-//         {   
-//             $table_body .= '<a href="#" data-toggle="modal" data-target="#edit_product_modal" data-tt="tooltip" title="'.$this->lang->line('product_edit').'" class="btn btn-warning btn-xs edit_product_modal mr-2" data-warehouse_product_id="'.$item->warehouse_product_id.'">
-//                               <i class="fas fa-edit"></i> 
-//                             </a>';
-//         }
+        // Edit Button        
+        if($this->permission_model->has_permission('edit_product'))
+        {   
+            $table_body .= '<a href="#" data-toggle="modal" data-target="#edit_product_modal" data-tt="tooltip" title="'.$this->lang->line('product_edit').'" class="btn btn-warning btn-xs edit_product_modal mr-2" data-warehouse_product_id="'.$item->warehouse_product_id.'">
+                              <i class="fas fa-edit"></i> 
+                            </a>';
+        }
 
-//         // Stock In/Out Buttons
-//         if($this->permission_model->has_permission('add_stock'))
-//         {
-//             $warehouse_product = $this->warehouse_products_model->get_single_record($item->warehouse_product_id);
-//             $table_body .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock In" data-entry_type="in" class="btn btn-danger btn-xs add_stock_modal mr-2" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$warehouse_product->product_id.'" data-warehouse_id="'.$warehouse_product->warehouse_id.'">
-//                               <i class="far fa-plus-square"></i> 
-//                             </a>';
-//             $table_body .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock Out" data-entry_type="out" class="btn btn-success btn-xs add_stock_modal" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$warehouse_product->product_id.'" data-warehouse_id="'.$warehouse_product->warehouse_id.'">
-//                               <i class="far fa-minus-square"></i> 
-//                             </a>';
-//         }
+        // Stock In/Out Buttons
+        if($this->permission_model->has_permission('add_stock'))
+        {
+            $warehouse_product = $this->warehouse_products_model->get_single_record($item->warehouse_product_id);
+            $table_body .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock In" data-entry_type="in" class="btn btn-danger btn-xs add_stock_modal mr-2" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$warehouse_product->product_id.'" data-warehouse_id="'.$warehouse_product->warehouse_id.'">
+                              <i class="far fa-plus-square"></i> 
+                            </a>';
+            $table_body .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock Out" data-entry_type="out" class="btn btn-success btn-xs add_stock_modal" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$warehouse_product->product_id.'" data-warehouse_id="'.$warehouse_product->warehouse_id.'">
+                              <i class="far fa-minus-square"></i> 
+                            </a>';
+        }
 
-//         /* End Action column buttons*/
+        /* End Action column buttons*/
 
-//         // Product Status Badge
-//         $product_status = '';
-//         if($item->status == PRODUCT_STATUS_ACTIVE)
-//             $product_status .= '<span class="badge badge-success">'.ucfirst(PRODUCT_STATUS_ACTIVE).'</span>';
-//         if($item->status == PRODUCT_STATUS_INACTIVE)
-//             $product_status .= '<span class="badge badge-danger">'.ucfirst(PRODUCT_STATUS_INACTIVE).'</span>';
+        // Product Status Badge
+        $product_status = '';
+        if($item->status == PRODUCT_STATUS_ACTIVE)
+            $product_status .= '<span class="badge badge-success">'.ucfirst(PRODUCT_STATUS_ACTIVE).'</span>';
+        if($item->status == PRODUCT_STATUS_INACTIVE)
+            $product_status .= '<span class="badge badge-danger">'.ucfirst(PRODUCT_STATUS_INACTIVE).'</span>';
 
-//         // Checkbox for bulk actions
-//         $select_product_html = '<input type="checkbox" class="single_product" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$item->id.'"><input type="hidden" name="product_id" id="product_id" data-warehouse_product_id="'.$item->warehouse_product_id.'" value="'.$item->id.'">';
+        // Checkbox for bulk actions
+        $select_product_html = '<input type="checkbox" class="single_product" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$item->id.'"><input type="hidden" name="product_id" id="product_id" data-warehouse_product_id="'.$item->warehouse_product_id.'" value="'.$item->id.'">';
 
-//         // // Calculate values
-//         // $available_qty = $item->quantity;
-//         // $purchase_price = $item->product_cost;  // Purchase Price (Base price)
-//         // $mrp = $item->product_price;  // MRP (Maximum Retail Price - usually includes GST)
-//         // $tax_rate = isset($item->igst) ? $item->igst : 0; // Get GST rate from product_view
+        // // Calculate values
+        // $available_qty = $item->quantity;
+        // $purchase_price = $item->product_cost;  // Purchase Price (Base price)
+        // $mrp = $item->product_price;  // MRP (Maximum Retail Price - usually includes GST)
+        // $tax_rate = isset($item->igst) ? $item->igst : 0; // Get GST rate from product_view
         
-//         // // Calculation Option 1: If MRP includes GST (most common scenario)
-//         // // Then Total Amount = MRP × Quantity
-//         // $total_amount = $mrp * $available_qty;
+        // // Calculation Option 1: If MRP includes GST (most common scenario)
+        // // Then Total Amount = MRP × Quantity
+        // $total_amount = $mrp * $available_qty;
         
-//         // // Taxable Value = Total Amount ÷ (1 + GST Rate/100) if MRP includes GST
-//         // // OR Taxable Value = Purchase Price × Quantity if that's the base price
-//         // $taxable_value = $purchase_price * $available_qty;
+        // // Taxable Value = Total Amount ÷ (1 + GST Rate/100) if MRP includes GST
+        // // OR Taxable Value = Purchase Price × Quantity if that's the base price
+        // $taxable_value = $purchase_price * $available_qty;
         
-//         // // Calculate GST Amount
-//         // $gst_amount = $taxable_value * ($tax_rate / 100);
-//         $available_qty = (float)$item->quantity;
+        // // Calculate GST Amount
+        // $gst_amount = $taxable_value * ($tax_rate / 100);
+        $available_qty = (float)$item->quantity;
 
-//         // Use Warehouse Cost, Fallback to Master Cost if 0
-//         $purchase_price = ((float)$item->product_cost > 0) ? (float)$item->product_cost : (float)$item->master_cost;
+        // Use Warehouse Cost, Fallback to Master Cost if 0
+        $purchase_price = ((float)$item->product_cost > 0) ? (float)$item->product_cost : (float)$item->master_cost;
 
-//         // Use Warehouse Price, Fallback to Master Price if 0
-//         $mrp = ((float)$item->product_price > 0) ? (float)$item->product_price : (float)$item->master_price;
+        // Use Warehouse Price, Fallback to Master Price if 0
+        $mrp = ((float)$item->product_price > 0) ? (float)$item->product_price : (float)$item->master_price;
 
-//         $tax_rate = (float)(isset($item->igst) ? $item->igst : 0);
-//         $tax_type = (isset($item->tax_type)) ? $item->tax_type : 0; // 0: Exclusive, 1: Inclusive
+        $tax_rate = (float)(isset($item->igst) ? $item->igst : 0);
+        $tax_type = (isset($item->tax_type)) ? $item->tax_type : 0; // 0: Exclusive, 1: Inclusive
 
-//         if ($tax_type == 1) { 
-//             // INCLUSIVE: Total is derived from price, Taxable is the base
-//             $total_amount  = $purchase_price * $available_qty;
-//             $taxable_value = $total_amount / (1 + ($tax_rate / 100));
-//         } else {
-//             // EXCLUSIVE: Cost is the base, Tax is added on top
-//             $taxable_value = $purchase_price * $available_qty;
-//             $gst_amount    = $taxable_value * ($tax_rate / 100);
-//             $total_amount  = $taxable_value + $gst_amount;
-//         }
-//         // Alternative: If Total Amount should be Taxable Value + GST
-//         $total_amount_with_gst = $taxable_value + $gst_amount;
+        if ($tax_type == 1) { 
+            // INCLUSIVE: Total is derived from price, Taxable is the base
+            $total_amount  = $purchase_price * $available_qty;
+            $taxable_value = $total_amount / (1 + ($tax_rate / 100));
+        } else {
+            // EXCLUSIVE: Cost is the base, Tax is added on top
+            $taxable_value = $purchase_price * $available_qty;
+            $gst_amount    = $taxable_value * ($tax_rate / 100);
+            $total_amount  = $taxable_value + $gst_amount;
+        }
+        // Alternative: If Total Amount should be Taxable Value + GST
+        $total_amount_with_gst = $taxable_value + $gst_amount;
 
-//         // Build row array with columns in the specified order
-//         $row = array();
-//         $row[] = $select_product_html;           // Checkbox
-//         $row[] = $item->warehouse_name;           // Branch
-//         $row[] = $item->name . '<br/><span style="font-size:12px;font-weight:bolder">' . strtoupper($item->product_category_name) . '</span>'; // Product Name + Category
-//         $row[] = $item->hsn;                      // HSN
-//         $row[] = number_format($available_qty, 0); // Available Qty
-//         $row[] = $item->batch_no;                  // Batch No
-//         $row[] = $item->uom_name;                  // UOM
-//         $row[] = number_format($item->alert_quantity, 0); // Alert Qty
-//         $row[] = number_format($mrp, 2);           // MRP
-//         $row[] = number_format($purchase_price, 2); // Purchase Price
-//         $row[] = number_format($taxable_value, 2);  // Taxable Value (Base price × Qty)
-//         $row[] = number_format($total_amount_with_gst, 2);   // Total Amount (Taxable Value + GST)
-//         $row[] = $product_status;                   // Status
-//         $row[] = $table_header . $table_body . $table_footer; // Action Buttons
+        // Build row array with columns in the specified order
+        $row = array();
+        $row[] = $select_product_html;           // Checkbox
+        $row[] = $item->warehouse_name;           // Branch
+        // $row[] = $item->name . '<br/><span style="font-size:12px;font-weight:bolder">' . strtoupper($item->product_category_name) . '</span>'; // Product Name + Category
+        $row[] = '<a href="javascript:void(0)" class="view_history" data-id="'.$item->id.'">' . $item->name . '</a><br/><span style="font-size:12px;font-weight:bolder">' . strtoupper($item->product_category_name) . '</span>';
+        $row[] = $item->hsn;                      // HSN
+        $row[] = number_format($available_qty, 0); // Available Qty
+        $row[] = $item->batch_no;                  // Batch No
+        $row[] = $item->uom_name;                  // UOM
+        $row[] = number_format($item->alert_quantity, 0); // Alert Qty
+        $row[] = number_format($mrp, 2);           // MRP
+        $row[] = number_format($purchase_price, 2); // Purchase Price
+        $row[] = number_format($taxable_value, 2);  // Taxable Value (Base price × Qty)
+        $row[] = number_format($total_amount_with_gst, 2);   // Total Amount (Taxable Value + GST)
+        $row[] = $product_status;                   // Status
+        $row[] = $table_header . $table_body . $table_footer; // Action Buttons
         
-//         $data[] = $row;
-//     }
+        $data[] = $row;
+    }
 
-//     $output = array(
-//         "draw" => $_POST['draw'],
-//         "recordsTotal" => $this->product_model->count_all(),
-//         "recordsFiltered" => $this->product_model->count_filtered(),
-//         "data" => $data,
-//     );
+    $output = array(
+        "draw" => $_POST['draw'],
+        "recordsTotal" => $this->product_model->count_all(),
+        "recordsFiltered" => $this->product_model->count_filtered(),
+        "data" => $data,
+    );
    
-//     echo json_encode($output);
-// }
+    echo json_encode($output);
+}
 
 // public function ajax_list() {
 //     $date_input = $this->input->post('filter_date');
@@ -1521,7 +1522,7 @@ else {
 //     echo json_encode(["draw" => intval($this->input->post('draw')), "recordsTotal" => count($data), "recordsFiltered" => count($data), "data" => $data]);
 // }
 
-public function ajax_list() {
+public function ajax_list_stock() {
     $from_input = $this->input->post('from_date');
     $to_input   = $this->input->post('to_date');
     
@@ -1539,6 +1540,7 @@ public function ajax_list() {
     $processed_data = [];
 
     foreach ($list as $item) {
+        // print_r($item);
         $p_id = $item->product_id;
         if(!isset($running_stock[$p_id])) $running_stock[$p_id] = 0;
         
@@ -1574,38 +1576,33 @@ public function ajax_list() {
     $data = array();
 
     foreach ($processed_data as $item) {
-        // --- 3. ACTION BUTTONS (In/Out) ---
         $actions = '';
         if($this->permission_model->has_permission('add_stock')) {
-            $actions .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock In" data-entry_type="in" class="btn btn-danger btn-xs add_stock_modal mr-1" data-product_id="'.$item->product_id.'" data-warehouse_id="1" data-warehouse_product_id="0">
-                            <i class="far fa-plus-square"></i>
-                         </a>';
-            $actions .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-tt="tooltip" title="Stock Out" data-entry_type="out" class="btn btn-success btn-xs add_stock_modal" data-product_id="'.$item->product_id.'" data-warehouse_id="1" data-warehouse_product_id="0">
-                            <i class="far fa-minus-square"></i>
-                         </a>';
+            $actions .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-entry_type="in" class="btn btn-danger btn-xs add_stock_modal mr-1" data-product_id="'.$item->product_id.'" data-warehouse_id="1" data-warehouse_product_id="0"><i class="far fa-plus-square"></i></a>';
+            $actions .= '<a href="#" data-toggle="modal" data-target="#add_stock_modal" data-entry_type="out" class="btn btn-success btn-xs add_stock_modal" data-product_id="'.$item->product_id.'" data-warehouse_id="1" data-warehouse_product_id="0"><i class="far fa-minus-square"></i></a>';
         }
-
+    
         $row = array();
-        $row[] = date('d-m-Y', strtotime($item->date));
-        $row[] = $item->type;
-        $row[] = $item->ref;
-        $row[] = $item->p_code;
-        $row[] = $item->p_name;
-        $row[] = $item->p_hsn;
-        $row[] = $item->p_uom;
-        $row[] = $item->p_alert;
-        $row[] = number_format($item->p_mrp, 2);
-        $row[] = number_format($item->pur_price, 2);
-        $row[] = number_format($item->sale_price, 2);
-        $row[] = $item->in_qty;
-        $row[] = $item->out_qty;
-        $row[] = "<b>".$item->closing_stock."</b>";
-        $row[] = "<b>".number_format($item->closing_value, 2)."</b>";
-        $row[] = $item->p_status == 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>';
-        $row[] = $actions; // Display the buttons
+        $row[] = date('d-m-Y', strtotime($item->date)); // 1. Date
+        $row[] = $item->type;                            // 2. Trans Type
+        $row[] = $item->ref;                             // 3. Ref
+        $row[] = $item->p_code;                          // 4. Product ID (PID)
+        $row[] = $item->p_name;                          // 5. Product Name
+        $row[] = $item->p_hsn;                           // 6. HSN
+        $row[] = $item->p_uom;                           // 7. UOM
+        $row[] = $item->p_alert;                         // 8. Alert
+        $row[] = number_format($item->p_mrp, 2);         // 9. MRP
+        $row[] = number_format($item->pur_price, 2);     // 10. Purchase Price
+        $row[] = number_format($item->sale_price, 2);    // 11. Sale Price
+        $row[] = $item->in_qty;                          // 12. In
+        $row[] = $item->out_qty;                         // 13. Out
+        $row[] = "<b>".$item->closing_stock."</b>";      // 14. Closing Stock
+        $row[] = "<b>".number_format($item->closing_value, 2)."</b>"; // 15. Closing Value
+        $row[] = $item->p_status == 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'; // 16. Status
+        // $row[] = $actions;                               // 17. Action
+        
         $data[] = $row;
     }
-
     echo json_encode([
         "draw" => intval($this->input->post('draw')), 
         "recordsTotal" => count($data), 

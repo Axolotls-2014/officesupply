@@ -21,28 +21,16 @@
             <div class="card card-warning card-outline">
               <div class="card-body">
                 <div class="row">
-                   <div class="col-md-2">
-                        <label>From Date</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control form-control-sm datepicker" id="from_date" name="from_date" value="<?=date('01-m-Y')?>" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label>To Date</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control form-control-sm datepicker" id="to_date" name="to_date" value="<?=date('d-m-Y')?>" readonly>
-                        </div>
-                    </div>
-                <div class="col-md-2">
-                    <label>Quantity</label>
-                    <select class="form-control form-control-sm select2bs4" id="quantity">
-                        <option value="<?=QUANTITY_ALL?>">ALL</option>
-                        <option value="<?=QUANTITY_GREATER_THEN_ZERO?>">Greater than Zero</option>
-                        <option value="<?=QUANTITY_ZERO?>">Zero</option>
-                      <!--  <option value="<?=QUANTITY_BELOW_ZERO?>">Below 0</option>-->
-                        <option value="<?=QUANTITY_NEGATIVE?>">Negative</option>
-                    </select>
-                </div>
+<div class="col-md-2">
+    <label>Quantity</label>
+    <select class="form-control form-control-sm select2bs4" id="quantity">
+        <option value="<?=QUANTITY_ALL?>">ALL</option>
+        <option value="<?=QUANTITY_GREATER_THEN_ZERO?>">Greater than Zero</option>
+        <option value="<?=QUANTITY_ZERO?>">Zero</option>
+      <!--  <option value="<?=QUANTITY_BELOW_ZERO?>">Below 0</option>-->
+        <option value="<?=QUANTITY_NEGATIVE?>">Negative</option>
+    </select>
+</div>
                 <?php 
                     $user_id = $this->session->userdata('user_id');
                     $user = $this->db->get_where('users', ['id' => $user_id])->row();
@@ -60,8 +48,32 @@
                     }
                 ?>
                 
-                    <input type="hidden" id="warehouse_id" value="1">
-
+                <div class="col-md-2">
+                    <label>Branch</label>
+                    <select class="form-control form-control-sm select2bs4" id="warehouse_id" name="w_id" <?= $user_branch_id ? 'disabled' : '' ?>>
+                            <option value="">All Branches</option>  <!-- Add this option -->
+   
+                    <?php if ($user_branch_id && $warehouse_name): ?>
+                            
+                            <option value="<?= $user_branch_id ?>" selected><?= $warehouse_name ?></option>
+                        <?php else: ?>
+                         
+                            <?php 
+                                $first_warehouse = true;
+                                foreach ($warehouses as $value): 
+                            ?>
+                                <option value="<?= $value->id ?>" 
+                                    <?= ($first_warehouse) ? 'selected' : '' ?>
+                                    <?= ($value->is_default == WAREHOUSE_IS_DEFAULT_YES && !$first_warehouse) ? 'selected' : '' ?>>
+                                    <?= $value->name ?>
+                                </option>
+                                <?php 
+                                    $first_warehouse = false;
+                                endforeach; 
+                            ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
                   <div class="col-md-2">
                     <label>Products</label>
                     <select class="form-control form-control-sm select2bs4" id="product_id" name="p_id"> 
@@ -122,7 +134,12 @@
                         <i class="fas fa-share"></i> Export
                       </a>
                     </li>
-
+                    <li class="nav-item ml-2">
+                        <!-- Back Button - Hidden by default -->
+                        <a class="nav-link btn-sm btn-info text-white" href="javascript:void(0)" id="btn_back_to_list" style="display:none;">
+                            <i class="fas fa-arrow-left"></i> Back to Product List
+                        </a>
+                    </li>
                     <!-- <?php 
                       if($this->permission_model->has_permission('import_product'))
                       {
@@ -167,39 +184,42 @@
               <!-- /.card-header -->
               <div class="card-body">
                 <table id="example" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Ref Number</th>
-                    <th>PID</th>
-                    <th>Product Name</th>
-                    <th>HSN</th>
-                    <th>UOM</th>
-                    <th>Alert</th>
-                    <th>MRP</th>
-                    <th>Pur. Price</th>
-                    <th>Sale Price</th>
-                    <th>In Qty</th>
-                    <th>Out Qty</th>
-                    <th>Closing Stock</th>
-                    <th>Closing Value</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="product_list"></tbody>
-            <tfoot style="background-color: #eee; font-weight: bold;">
-                <tr>
-                    <td colspan="11" align="right">Summary:</td>
-                    <td id="total_in">0</td>
-                    <td id="total_out">0</td>
-                    <td id="total_stock">0</td>
-                    <td id="total_value">0.00</td>
-                    <td colspan="2"></td>
-                </tr>
-            </tfoot>
-</table>
+                 <thead>
+    <tr>
+        <th width="2%"><input type="checkbox" class="all_product"></th>
+        <th>Branch</th>
+        <th>Product Name</th>
+        <th>HSN</th>
+        <th>Available Qty</th>
+        <th>Batch No</th>
+        <th>UOM</th>
+        <th>Alert Qty</th>
+        <th>MRP (<?=$this->session->userdata('currency_symbol')?>)</th>
+        <th>Purchase Price (<?=$this->session->userdata('currency_symbol')?>)</th>
+        <th>Taxable Value (<?=$this->session->userdata('currency_symbol')?>)</th>
+        <th>Total Amount (<?=$this->session->userdata('currency_symbol')?>)</th>
+        <th>Status</th>
+        <th width="15%">Action</th>   
+    </tr>
+</thead>
+                  <tbody id="product_list">
+                  </tbody>
+<tfoot align="right">
+    <tr>
+        <th style="text-align: left" colspan="4"></th>
+        <th style="text-align: left"></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th style="text-align: left !important"></th>
+        <th style="text-align: left !important"></th>
+        <th></th>
+        <th></th>
+    </tr>
+</tfoot>
+                </table>
               </div>
             </div>
           </div>
@@ -342,6 +362,165 @@
 
 
 <script type="text/javascript">
+var current_view = 'list'; // Global flag: 'list' or 'history'
+var selected_product_id = '';
+
+$(document).ready(function() {
+    // Initial Load
+    initialize_datatable();
+
+    // 1. Click on Product Name to show History
+   $(document).on('click', '.view_history', function(e) {
+        e.preventDefault();
+        selected_product_id = $(this).data('id');
+        current_view = 'history';
+    
+        $('#btn_back_to_list').show();
+        $('.export').hide();
+    
+        // 1. KILL the old table completely
+        if ($.fn.DataTable.isDataTable('#example')) {
+            $('#example').DataTable().destroy();
+        }
+    
+        // 2. WIPE the HTML and put new History headers
+        update_table_headers('history');
+    
+        // 3. NOW load the data
+        initialize_datatable();
+    });
+
+    // 2. Click Back Button
+  $(document).on('click', '#btn_back_to_list', function() {
+        current_view = 'list';
+        selected_product_id = '';
+        
+        $('#btn_back_to_list').hide();
+        $('.export').show();
+    
+        if ($.fn.DataTable.isDataTable('#example')) {
+            $('#example').DataTable().destroy();
+        }
+    
+        update_table_headers('list'); // Switch back to 14 columns
+        initialize_datatable();
+    });
+
+});
+
+function update_table_headers(mode) {
+    var headContent = "";
+    var footContent = "";
+
+    if (mode === 'history') {
+        headContent = `
+            <tr>
+                <th>Date</th><th>Type</th><th>Ref No</th><th>PID</th>
+                <th>Product Name</th><th>HSN</th><th>UOM</th><th>Alert</th>
+                <th>MRP</th><th>Pur. Price</th><th>Sale Price</th><th>In Qty</th>
+                <th>Out Qty</th><th>Closing</th><th>Value</th><th>Status</th>
+            </tr>`;
+        // footContent = ""; // No footer for history
+        footContent = `
+            <tr>
+                <th colspan="13" style="text-align:right">Total Closing Value:</th>
+                <th id="hist_total_stock"></th>
+                <th id="hist_total_value"></th>
+                <th></th>
+            </tr>`;
+    } else {
+        headContent = `
+            <tr>
+                <th width="2%"><input type="checkbox" class="all_product"></th>
+                <th>Branch</th>
+                <th>Product Name</th>
+                <th>HSN</th>
+                <th>Available Qty</th>
+                <th>Batch No</th>
+                <th>UOM</th>
+                <th>Alert Qty</th>
+                <th>MRP</th>
+                <th>Purchase Price</th>
+                <th>Taxable Value</th>
+                <th>Total Amount</th>
+                <th>Status</th>
+                <th width="15%">Action</th>   
+            </tr>`;
+        footContent = `
+            <tr><th colspan="4" style="text-align: left">Total</th><th style="text-align: left"></th><th></th><th></th><th></th><th></th><th></th><th style="text-align: left !important"></th><th style="text-align: left !important"></th><th></th><th></th></tr>`;
+    }
+
+    // UPDATE ONLY THE INNER HTML OF THEAD AND TFOOT
+    $('#example thead').html(headContent);
+    $('#example tfoot').html(footContent);
+    $('#example tbody').html(''); // Clear rows so it looks clean while loading
+}
+
+function initialize_datatable() {
+    var ajax_url = (current_view === 'list') ? "<?php echo site_url('product/ajax_list')?>" : "<?php echo site_url('product/ajax_list_stock')?>";
+    
+    var table = $('#example').DataTable({ 
+        "processing": true,
+        "serverSide": true,
+        "bDestroy": true,
+        "autoWidth": false, 
+        "scrollX": true, 
+        "order": [],
+        "ajax": {
+            "url": ajax_url,
+            "type": "POST",
+            "data": function(d) {
+                d.warehouse_id = $('#warehouse_id').val();
+                d.product_id = (current_view === 'history') ? selected_product_id : $('#product_id').val();
+                d.product_status = $('#product_status').val();
+                d.quantity = $('#quantity').val();
+                d.manage_inventory = $('#manage_inventory').val();
+                d.<?php echo $this->security->get_csrf_token_name(); ?> = '<?php echo $this->security->get_csrf_hash(); ?>';
+            }
+        },
+        "initComplete": function(settings, json) {
+            // THIS LINE FIXES THE ALIGNMENT AND HEADER VISIBILITY
+            this.api().columns.adjust();
+            $('[data-tt="tooltip"]').tooltip({trigger : 'hover'}); 
+        },
+        "footerCallback": function (row, data, start, end, display) {
+            var api = this.api();
+            var intVal = function (i) { 
+                return typeof i === 'string' ? i.replace(/[\$,]|<b>|<\/b>/g, '')*1 : typeof i === 'number' ? i : 0; 
+            };
+
+            if (current_view === 'list') {
+                // Calculation for All Products List
+                var qty = api.column(4).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                var taxable = api.column(10).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                var total = api.column(11).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+
+                $(api.column(4).footer()).html(qty.toLocaleString("en-US"));
+                $(api.column(10).footer()).html(taxable.toLocaleString("en-US"));
+                $(api.column(11).footer()).html(total.toLocaleString("en-US"));
+            } 
+            else {
+                // Calculation for History Mode
+                // Column 13: Closing Stock, Column 14: Closing Value
+                // var totalValue = api.column(14).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                
+                // // Since we reversed the data for display, the "Closing Stock" total 
+                // // in the footer is usually just the latest stock (top row)
+                // var latestStock = intVal(data[0][13]); 
+
+                // $(api.column(13).footer()).html("<b>" + latestStock.toLocaleString("en-US") + "</b>");
+                // $(api.column(14).footer()).html("<b>" + totalValue.toLocaleString("en-US", {minimumFractionDigits: 2}) + "</b>");
+                var latestStock = (data.length > 0) ? intVal(data[0][13]) : 0; 
+    var latestValue = (data.length > 0) ? intVal(data[0][14]) : 0; 
+
+    // Update the footer with the LATEST balance, not the sum of all rows
+    $(api.column(13).footer()).html("<b>" + latestStock.toLocaleString("en-US") + "</b>");
+    $(api.column(14).footer()).html("<b>" + latestValue.toLocaleString("en-US", {minimumFractionDigits: 2}) + "</b>");
+            }
+        }
+    });
+}
+
   $(document).ready(function(){
 
     const product_categoryToast = Swal.mixin({
@@ -828,66 +1007,11 @@
 //     });
 // }
 
-function initialize_datatable() {
-    $('#example').DataTable({ 
-        "processing": true,
-        "serverSide": true,
-        "bDestroy": true,
-        "ajax": {
-            "url": "<?php echo site_url('product/ajax_list')?>",
-            "type": "POST",
-            "data": function(d) {
-                d.from_date = $('#from_date').val(); 
-                d.to_date = $('#to_date').val();         
-                d.product_id = $('#product_id').val();
-                d.quantity = $('#quantity').val();
-                d.product_status = $('#product_status').val();
-                d.manage_inventory = $('#manage_inventory').val();
-                d.<?php echo $this->security->get_csrf_token_name(); ?> = '<?php echo $this->security->get_csrf_hash(); ?>';
-            }
-        },
-        "footerCallback": function (row, data, start, end, display) {
-            var api = this.api();
-            var intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,<b>,<\/b>]/g, '')*1 : typeof i === 'number' ? i : 0; };
-
-            var tIn = api.column(11).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            var tOut = api.column(12).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            
-            // Latest balance is in the first row due to array_reverse
-            var latestStock = data.length > 0 ? intVal(data[0][13]) : 0;
-            var latestValue = data.length > 0 ? intVal(data[0][14]) : 0;
-
-            $('#total_in').html(tIn);
-            $('#total_out').html(tOut);
-            $('#total_stock').html(latestStock);
-            $('#total_value').html(latestValue.toFixed(2));
-        }
-    });
-}
 
 
-
-    // $(document).on('change','#product_id, #warehouse_id, #quantity,#product_status,#manage_inventory',function(e){
-    //   initialize_datatable();
-    // })
-    
-    // Add #filter_date to the list of IDs to listen for
-    // $(document).on('change', '#filter_date, #product_id, #warehouse_id, #quantity, #product_status, #manage_inventory', function(e) {
-    //     initialize_datatable();
-    // });
-    $(document).on('change', '#from_date, #to_date, #product_id, #quantity, #product_status', function() {
-    initialize_datatable();
-});
-    
-    // Since you are using a datepicker, standard 'change' sometimes doesn't fire.
-    // Use this to ensure the table refreshes as soon as a date is picked:
-    $('#from_date').datepicker().on('changeDate', function(e) {
-        initialize_datatable();
-    });
-    $('#to_date').datepicker().on('changeDate', function(e) {
-        initialize_datatable();
-    });
-
+    $(document).on('change','#product_id, #warehouse_id, #quantity,#product_status,#manage_inventory',function(e){
+      initialize_datatable();
+    })
 
    
 

@@ -470,58 +470,132 @@ class Product_model extends CI_Model {
         return $query;
     }
 
-   public function get_all_movements_ledger($target_date = null, $pid = null) {
-                $this->db->query("SET SESSION sql_mode = ''");
+//   public function get_all_movements_ledger($target_date = null, $pid = null) {
+//                 $this->db->query("SET SESSION sql_mode = ''");
                 
-                $sql = "SELECT m.*, p.name as p_name, p.pid as p_code, p.hsn as p_hsn, p.status as p_status, p.alert_quantity as p_alert, u.uom as p_uom, p.price as p_mrp, p.cost as p_master_cost
-                        FROM (
-                            /* 1. Initial Stock from Product Creation */
-                            SELECT created_date as date, 'Initial Stock' as type, 'SYSTEM' as ref, product_id, quantity as in_qty, 0 as out_qty, cost as pur_price, 0 as sale_price FROM warehouse_products
+//                 $sql = "SELECT m.*, p.name as p_name, p.pid as p_code, p.hsn as p_hsn, p.status as p_status, p.alert_quantity as p_alert, u.uom as p_uom, p.price as p_mrp, p.cost as p_master_cost
+//                         FROM (
+//                             /* 1. Initial Stock from Product Creation */
+//                             SELECT created_date as date, 'Initial Stock' as type, 'SYSTEM' as ref, product_id, quantity as in_qty, 0 as out_qty, cost as pur_price, 0 as sale_price FROM warehouse_products
                             
-                            UNION ALL
-                            /* 2. Purchase - ONLY Delivered */
-                            SELECT pd.delivery_date as date, 'Purchase' as type, p.invoice_no as ref, pdi.product_id, pdi.quantity as in_qty, 0 as out_qty, pdi.cost as pur_price, 0 as sale_price 
-                            FROM purchase_delivery_items pdi 
-                            JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id 
-                            JOIN purchase p ON p.id = pd.purchase_id WHERE p.delete_status = 0
+//                             UNION ALL
+//                             /* 2. Purchase - ONLY Delivered */
+//                             SELECT pd.delivery_date as date, 'Purchase' as type, p.invoice_no as ref, pdi.product_id, pdi.quantity as in_qty, 0 as out_qty, pdi.cost as pur_price, 0 as sale_price 
+//                             FROM purchase_delivery_items pdi 
+//                             JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id 
+//                             JOIN purchase p ON p.id = pd.purchase_id WHERE p.delete_status = 0
             
-                            UNION ALL
-                            /* 3. Sale - ONLY Delivered */
-                            SELECT sd.delivery_date as date, 'Sale' as type, s.reference_no as ref, sdi.product_id, 0 as in_qty, sdi.quantity as out_qty, 0 as pur_price, sdi.selling_price as sale_price 
-                            FROM sale_delivery_items sdi 
-                            JOIN sale_delivery sd ON sd.id = sdi.sale_delivery_id 
-                            JOIN sale s ON s.id = sd.sale_id WHERE s.delete_status = 0
+//                             UNION ALL
+//                             /* 3. Sale - ONLY Delivered */
+//                             SELECT sd.delivery_date as date, 'Sale' as type, s.reference_no as ref, sdi.product_id, 0 as in_qty, sdi.quantity as out_qty, 0 as pur_price, sdi.selling_price as sale_price 
+//                             FROM sale_delivery_items sdi 
+//                             JOIN sale_delivery sd ON sd.id = sdi.sale_delivery_id 
+//                             JOIN sale s ON s.id = sd.sale_id WHERE s.delete_status = 0
             
-                            UNION ALL
-                            /* 4. Purchase Return - ONLY Delivered */
-                            SELECT prd.delivery_date as date, 'Pur. Return' as type, pr.reference_no as ref, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, prdi.cost as pur_price, 0 as sale_price 
-                            FROM purchase_return_delivery_items prdi 
-                            JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
-                            JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
+//                             UNION ALL
+//                             /* 4. Purchase Return - ONLY Delivered */
+//                             SELECT prd.delivery_date as date, 'Pur. Return' as type, pr.reference_no as ref, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, prdi.cost as pur_price, 0 as sale_price 
+//                             FROM purchase_return_delivery_items prdi 
+//                             JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+//                             JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
             
-                            UNION ALL
-                            /* 5. Sales Return - ONLY Delivered */
-                            SELECT srd.delivery_date as date, 'Sale Return' as type, sr.reference_no as ref, srdi.product_id, srdi.quantity as in_qty, 0 as out_qty, 0 as pur_price, srdi.cost as sale_price 
-                            FROM sales_return_delivery_items srdi 
-                            JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
-                            JOIN sales_return sr ON sr.id = srd.sales_return_id WHERE sr.delete_status = 0
-                        ) as m 
-                        LEFT JOIN product p ON p.id = m.product_id 
-                        LEFT JOIN uom u ON u.id = p.uom_id";
+//                             UNION ALL
+//                             /* 5. Sales Return - ONLY Delivered */
+//                             SELECT srd.delivery_date as date, 'Sale Return' as type, sr.reference_no as ref, srdi.product_id, srdi.quantity as in_qty, 0 as out_qty, 0 as pur_price, srdi.cost as sale_price 
+//                             FROM sales_return_delivery_items srdi 
+//                             JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+//                             JOIN sales_return sr ON sr.id = srd.sales_return_id WHERE sr.delete_status = 0
+//                         ) as m 
+//                         LEFT JOIN product p ON p.id = m.product_id 
+//                         LEFT JOIN uom u ON u.id = p.uom_id";
             
-                $where = [];
-                // if($target_date) $where[] = "DATE(m.date) <= " . $this->db->escape(date('Y-m-d', strtotime($target_date)));
-                if($target_date) {
-                    // Just use the passed string, don't use strtotime here again
-                    $where[] = "DATE(m.date) <= " . $this->db->escape($target_date);
-                }
-                if($pid) $where[] = "m.product_id = " . $this->db->escape($pid);
+//                 $where = [];
+//                 // if($target_date) $where[] = "DATE(m.date) <= " . $this->db->escape(date('Y-m-d', strtotime($target_date)));
+//                 if($target_date) {
+//                     // Just use the passed string, don't use strtotime here again
+//                     $where[] = "DATE(m.date) <= " . $this->db->escape($target_date);
+//                 }
+//                 if($pid) $where[] = "m.product_id = " . $this->db->escape($pid);
                 
-                if(!empty($where)) $sql .= " WHERE " . implode(" AND ", $where);
+//                 if(!empty($where)) $sql .= " WHERE " . implode(" AND ", $where);
                 
-                $sql .= " ORDER BY m.date ASC"; // Needed for running balance math
-                return $this->db->query($sql)->result();
-            }
+//                 $sql .= " ORDER BY m.date ASC"; // Needed for running balance math
+//                 return $this->db->query($sql)->result();
+//             }
+
+public function get_all_movements_ledger($target_date = null, $pid = null) {
+    $this->db->query("SET SESSION sql_mode = ''");
+    
+    // We add 'trans_mrp' to the subquery to capture the price at the time of transaction
+    $sql = "SELECT m.*, 
+                   p.name as p_name, p.pid as p_code, p.hsn as p_hsn, p.status as p_status, 
+                   p.alert_quantity as p_alert, u.uom as p_uom, 
+                   IF(m.trans_mrp > 0, m.trans_mrp, p.price) as p_mrp, /* Use transaction MRP if available, else master */
+                   p.cost as p_master_cost
+            FROM (
+                /* 1. Initial Stock from Product Creation */
+                /*SELECT created_date as date, 'Initial Stock' as type, 'SYSTEM' as ref, product_id, quantity as in_qty, 0 as out_qty, cost as pur_price, 0 as sale_price, price as trans_mrp 
+                FROM warehouse_products
+                
+                UNION ALL */
+                /* 2. Purchase - ONLY Delivered */
+                SELECT pd.delivery_date as date, 'Purchase' as type, p.invoice_no as ref, pdi.product_id, pdi.quantity as in_qty, 0 as out_qty, pdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                FROM purchase_delivery_items pdi 
+                JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id 
+                JOIN purchase p ON p.id = pd.purchase_id WHERE p.delete_status = 0
+
+                UNION ALL
+                /* 3. Sale - ONLY Delivered */
+                SELECT sd.delivery_date as date, 'Sale' as type, s.reference_no as ref, sdi.product_id, 0 as in_qty, sdi.quantity as out_qty, 0 as pur_price, sdi.selling_price as sale_price, 0 as trans_mrp 
+                FROM sale_delivery_items sdi 
+                JOIN sale_delivery sd ON sd.id = sdi.sale_delivery_id 
+                JOIN sale s ON s.id = sd.sale_id WHERE s.delete_status = 0
+
+                UNION ALL
+                /* 4. Manual Stock Entries (THE MISSING PIECE FROM YOUR SCREENSHOT) */
+                /* product_price in 'stock' table is the MRP */
+                SELECT created_date as date, 
+                       IF(entry_type='in', 'Stock In', 'Stock Out') as type, 
+                       'MANUAL' as ref, 
+                       product_id, 
+                       IF(entry_type='in', quantity, 0) as in_qty, 
+                       IF(entry_type='out', quantity, 0) as out_qty, 
+                       product_cost as pur_price, 
+                       selling_price as sale_price, 
+                       product_price as trans_mrp 
+                FROM stock 
+                WHERE delete_status = 0
+
+                UNION ALL
+                /* 5. Purchase Return */
+                SELECT prd.delivery_date as date, 'Pur. Return' as type, pr.reference_no as ref, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, prdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                FROM purchase_return_delivery_items prdi 
+                JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+                JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
+
+                UNION ALL
+                /* 6. Sales Return */
+                SELECT srd.delivery_date as date, 'Sale Return' as type, sr.reference_no as ref, srdi.product_id, srdi.quantity as in_qty, 0 as out_qty, 0 as pur_price, srdi.cost as sale_price, 0 as trans_mrp 
+                FROM sales_return_delivery_items srdi 
+                JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+                JOIN sales_return sr ON sr.id = srd.sales_return_id WHERE sr.delete_status = 0
+            ) as m 
+            LEFT JOIN product p ON p.id = m.product_id 
+            LEFT JOIN uom u ON u.id = p.uom_id";
+
+    $where = [];
+    if($target_date) {
+        $where[] = "DATE(m.date) <= " . $this->db->escape($target_date);
+    }
+    if($pid) {
+        $where[] = "m.product_id = " . $this->db->escape($pid);
+    }
+    
+    if(!empty($where)) $sql .= " WHERE " . implode(" AND ", $where);
+    
+    $sql .= " ORDER BY m.date ASC"; 
+    return $this->db->query($sql)->result();
+}
 
 }
 ?>
