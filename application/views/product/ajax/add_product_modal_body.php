@@ -1,4 +1,4 @@
-  
+
 <form role="form" method="post" name="addProductForm" id="addProductForm">
   <div class="modal-header text-left">
     <h4 class="modal-title"><?php echo $this->lang->line('product_add');?></h4>
@@ -7,7 +7,16 @@
   </div>
   <div class="modal-body">
 
-      
+      <div class="form-group row">
+        <label for="inputEmail3" class="col-sm-4 col-form-label">
+          <?=$this->lang->line("product_manage_inventory")?>
+        </label>
+        <div class="col-sm-8">
+          <input type="radio" name="manage_inventory" value="<?=MANAGE_INVENTORY_YES?>" checked> <?=strtoupper(MANAGE_INVENTORY_YES)?>
+          <input type="radio" name="manage_inventory" value="<?=MANAGE_INVENTORY_NO?>"> <?=strtoupper(MANAGE_INVENTORY_NO)?>
+        </div>
+      </div>
+
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
           <?=$this->lang->line("product_name")?><span class="text-danger">*</span>
@@ -18,6 +27,14 @@
         </div>
       </div> 
 
+     <div class="form-group row">
+        <label for="inputEmail3" class="col-sm-4 col-form-label">
+        Product Code<span class="text-danger">*</span>
+        </label>
+        <div class="col-sm-8">
+          <input type="text" name="product_code" value="<?=set_value("product_code") ?>" class="form-control form-control-sm field_validation" id="product_code" placeholder="Product Code" required>
+        </div>
+      </div> 
                         
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
@@ -78,16 +95,17 @@
         </div>
       </div> 
 
-      <div class="form-group row">
-        <label for="inputEmail3" class="col-sm-4 col-form-label">
-          <?=$this->lang->line("product_hsn")?><span class="text-danger">*</span>
-        </label>
-        <div class="col-sm-8">
-          <input type="text" name="hsn" value="<?=set_value("hsn") ?>" class="form-control form-control-sm field_validation" id="hsn" placeholder="<?=$this->lang->line("product_hsn")?>">
-          <span id="err_hsn" class="error invalid-feedback"></span>
-        </div>
-      </div>
-
+     <div class="form-group row">
+    <label for="inputEmail3" class="col-sm-4 col-form-label">
+        <?=$this->lang->line("product_hsn")?><span class="text-danger">*</span>
+    </label>
+    <div class="col-sm-8">
+        <input type="text" name="hsn" value="<?=set_value("hsn") ?>" 
+               class="form-control form-control-sm field_validation" 
+               id="hsn" placeholder="Enter HSN code">
+        <span id="err_hsn" class="error invalid-feedback"><?=form_error('hsn')?></span>
+    </div>
+</div>
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
           <?=$this->lang->line("product_cost")?>
@@ -95,16 +113,6 @@
         <div class="col-sm-8">
           <input type="number" name="cost" value="<?=set_value("cost") ?>" class="form-control form-control-sm" step="0.01" id="cost" placeholder="<?=$this->lang->line("product_cost")?>">
           <span id="err_cost" class="error invalid-feedback"></span>
-        </div>
-      </div>
-
-      <div class="form-group row">
-        <label for="inputEmail3" class="col-sm-4 col-form-label">
-          <?=$this->lang->line("product_price")?>
-        </label>
-        <div class="col-sm-8">
-          <input type="number" name="price" value="<?=set_value("price") ?>" class="form-control form-control-sm" step="0.01" id="price" placeholder="<?=$this->lang->line("product_price")?>">
-          <span id="err_price" class="error invalid-feedback"></span>
         </div>
       </div>
 
@@ -120,13 +128,41 @@
 
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
+          <?=$this->lang->line("product_price")?>
+        </label>
+        <div class="col-sm-8">
+          <input type="number" name="price" value="<?=set_value("price") ?>" class="form-control form-control-sm" step="0.01" id="price" placeholder="<?=$this->lang->line("product_price")?>">
+          <span id="err_price" class="error invalid-feedback"></span>
+        </div>
+      </div>
+
+      
+
+      <div class="form-group row d-none">
+        <label for="inputEmail3" class="col-sm-4 col-form-label">
           <?=$this->lang->line("product_markup")?><span class="text-danger">*</span>
         </label>
         <div class="col-sm-8">
-          <input type="text" name="markup" value="<?=set_value("markup") ?>" class="form-control form-control-sm field_validation" id="markup" placeholder="<?=$this->lang->line("product_markup")?>">
+          <input type="text" name="markup" value="<?=set_value("markup",0) ?>" class="form-control form-control-sm field_validation" id="markup" placeholder="<?=$this->lang->line("product_markup")?>">
           <span id="err_markup" class="error invalid-feedback"></span>
         </div>
       </div> 
+     <!-- <div class="form-group row">
+    <label for="inputEmail3" class="col-sm-4 col-form-label">
+        Opening Quantity
+    </label>
+    <div class="col-sm-8">
+        <input type="number" name="opening_quantity" value="<?=set_value("opening_quantity", 0) ?>" 
+               class="form-control form-control-sm" 
+               id="opening_quantity" 
+               placeholder="Opening Quantity" 
+               step="0.01" 
+               min="0">
+        <span id="err_opening_quantity" class="error invalid-feedback"></span>
+        <small class="text-muted">Initial stock quantity (will create stock entry if > 0)</small>
+    </div>
+</div>-->
+
 
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
@@ -137,6 +173,7 @@
           <span id="err_alert_quantity" class="error invalid-feedback"></span>
         </div>
       </div> 
+      
 
       <div class="form-group row">
         <label for="inputEmail3" class="col-sm-4 col-form-label">
@@ -177,6 +214,27 @@
           <span id="err_status" class="error invalid-feedback"><?=form_error('status')?></span>
         </div>
       </div> 
+
+      <div class="form-group row">
+        <label for="inputEmail3" class="col-sm-4 col-form-label">
+          <?=$this->lang->line("product_image")?>
+        </label>
+        <div class="col-sm-8">
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" id="upload_image" name="upload_image">
+            <label class="custom-file-label" for="product_image">Choose file</label>
+          </div>
+          <div id="message"></div>
+          <div>
+            <img src="" height="100px" width="100px" id="displayImage" style="padding-top: 5px;display: none;">
+          </div>
+          <button class="btn btn-sm btn-danger" id ="deleteImageButton" style="display: none;float: right;margin-top: -64px;"><i class="fas fa-times-circle"></i></button>
+          <input type="hidden" value="" name="product_image" id="product_image">
+
+        </div>
+      </div>
+
+      
 
     </div>
   <div class="modal-footer">

@@ -88,17 +88,103 @@ class Payment_in_model extends CI_Model {
         return $this->db->insert('payment_in_distribution', $data);
     }
 
-    public function get_customer_unpaid_invoices($customer_id) {
-        $this->db->select('s.id, s.reference_no, s.invoice_date, s.total, 
-                          (s.total - COALESCE((
-                              SELECT SUM(t.amount) 
-                              FROM transaction_header t 
-                              WHERE t.entry_id = s.id AND t.module = "S" AND t.type = "R"
-                          ), 0)) as due_amount');
+//   public function get_customer_unpaid_invoices($customer_id) {
+//         $this->db->select('
+//             s.id, 
+//             s.reference_no, 
+//             s.invoice_date, 
+//             s.total, 
+//             (s.total 
+//                 - COALESCE(s.tds, 0) 
+//                 - COALESCE((
+//                     SELECT SUM(t.amount) 
+//                     FROM transaction_header t 
+//                     WHERE t.entry_id = s.id AND t.module = "S" AND t.type = "R"
+//                 ), 0) 
+//                 - COALESCE((
+//                   SELECT SUM(sr.total) 
+//                     FROM sales_return sr 
+//                     INNER JOIN sales_return_delivery srd ON srd.sales_return_id = sr.id
+//                     WHERE sr.sale_id = s.id AND sr.delete_status = 0
+//                 ), 0)
+//             ) as due_amount');
+        
+//         $this->db->from('sale s');
+//         $this->db->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner');
+//         $this->db->where('s.customer_id', $customer_id);
+//         $this->db->where('s.delete_status', 0);
+//         $this->db->group_by('s.id');
+//         $this->db->having('due_amount >', 0);
+        
+//         return $this->db->get()->result();
+//     }
+
+    public function get_customer_unpaid_invoices($customer_id)
+    {
+        $this->db->select('
+            s.id, 
+            s.reference_no, 
+            s.invoice_date, 
+            s.total, 
+    
+            (
+                s.total 
+                - COALESCE(s.tds, 0) 
+    
+                - COALESCE((
+                    SELECT SUM(t.amount) 
+                    FROM transaction_header t 
+                    WHERE t.entry_id = s.id 
+                    AND t.module = "S" 
+                    AND t.type = "R"
+                ), 0) 
+    
+                - COALESCE((
+                    SELECT SUM(sr.total) 
+                    FROM sales_return sr 
+                    INNER JOIN sales_return_delivery srd 
+                        ON srd.sales_return_id = sr.id
+                    WHERE sr.sale_id = s.id 
+                    AND sr.delete_status = 0
+                ), 0)
+    
+            ) as due_amount
+        ');
+    
+        // FROM
         $this->db->from('sale s');
+    
+        // JOIN
+        $this->db->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner');
+    
+        // WHERE
         $this->db->where('s.customer_id', $customer_id);
         $this->db->where('s.delete_status', 0);
+    
+        // GROUP BY
+        $this->db->group_by('s.id');
+    
+        // HAVING
         $this->db->having('due_amount >', 0);
-        return $this->db->get()->result();
+    
+        // EXECUTE QUERY
+        $query = $this->db->get();
+    
+        // DEBUG SQL
+        // echo "<h3>Generated SQL</h3>";
+        // echo "<pre>";
+        // echo $this->db->last_query();
+        // echo "</pre>";
+    
+        // // DEBUG RESULT
+        // echo "<h3>Query Result</h3>";
+        // echo "<pre>";
+        // print_r($query->result());
+        // echo "</pre>";
+    
+        // exit;
+    
+        return $query->result();
     }
+    
 }

@@ -330,8 +330,9 @@
 <!-- Add this after the "Applied to Invoices" section -->
 <div class="row mt-3">
     <div class="col-md-6">
-        <div class="receipt-table">
+        <div class="receipt-table" style="padding: 10px; border: 1px solid #ccc;">
             <strong>Payment Summary:</strong><br>
+
             <?php if($payment_in->is_wallet_payment): ?>
                 <span>Added to Wallet: <?= $this->session->userdata('currency_symbol') . number_format($payment_in->amount, 2) ?></span>
             <?php else: ?>
@@ -342,10 +343,23 @@
                     $total_wallet_used += $dist->wallet_amount;
                     $total_cash_received += $dist->cash_amount;
                 }
+
+                // Logic to define the label based on Payment Mode
+                $mode = $payment_in->payment_mode;
+                if($mode == '0' || $mode == 'Cash') {
+                    $mode_label = "Cash Received";
+                } elseif($mode == '2' || $mode == 'Cheque') {
+                    $mode_label = "Cheque Received";
+                } elseif($mode == '3' || $mode == 'NEFT / Online Transfer') {
+                    $mode_label = "NEFT Received";
+                } else {
+                    $mode_label = "Amount Received";
+                }
                 ?>
-                <span>From Cash Received: <?= $this->session->userdata('currency_symbol') . number_format($total_cash_received, 2) ?></span><br>
+
+                <span>From <?= $mode_label ?>: <?= $this->session->userdata('currency_symbol') . number_format($total_cash_received, 2) ?></span><br>
                 <span>From Advance: <?= $this->session->userdata('currency_symbol') . number_format($total_wallet_used, 2) ?></span><br>
-                <span>Total Payment: <?= $this->session->userdata('currency_symbol') . number_format($payment_in->amount, 2) ?></span>
+                <span><strong>Total Payment:</strong> <?= $this->session->userdata('currency_symbol') . number_format($payment_in->amount, 2) ?></span>
             <?php endif; ?>
         </div>
     </div>

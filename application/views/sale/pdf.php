@@ -120,45 +120,56 @@
 <body>
     <div class="invoice-container">
         <!-- Header Section -->
-        <div style="text-align: center; margin-bottom: 10px; position: relative;">
+ <!-- Header Section -->
+        <table style="border: none; width: 100%; margin-bottom: 0; table-layout: fixed;">
+            <tr>
+                <!-- Left Column: Empty (to push text to center) -->
+                <td style="border: none; width: 20%;"></td>
 
-    <!-- Heading -->
-    <p style="font-size: 16px; font-weight: bold; margin: 0;">TAX INVOICE</p>
-    <hr>
+                <!-- Center Column: Title and Company Name -->
+                <td style="border: none; width: 60%; text-align: center; vertical-align: middle;">
+                    <p style="font-size: 16px; font-weight: bold; margin: 0; padding-bottom: 5px;">TAX INVOICE</p>
+                    <h4 style="margin: 0; font-size: 14px;">
+                        <?= htmlspecialchars($company_setting->company_name); ?>
+                    </h4>
+                </td>
 
-    <!-- Logo positioned to the RIGHT -->
-    <?php 
-    if (!empty($company_setting->logo)): 
-        $logo_path = FCPATH . 'assets/images/0/' . $company_setting->logo;
-        if (file_exists($logo_path)):
-            $logo_data = base64_encode(file_get_contents($logo_path));
-    ?>
-        <img src="data:image/png;base64,<?= $logo_data ?>" 
-           style="width: 180px; height: auto; object-fit: contain;
-       position: absolute; top: -10px; right: 0; margin-top: -5px;">
-    <?php 
-        endif;
-    endif; 
-    ?>
-
-    <!-- Company Name (remains perfectly centered) -->
-    <h4 style="margin: 5px 0;">
-        <?= htmlspecialchars($company_setting->company_name); ?>
-    </h4>
-
-    <div>
-        <?= htmlspecialchars($warehouse->address_line1); ?><br>
-        <?php if(!empty($warehouse->license_no)): ?>
-            License No: <?= htmlspecialchars($warehouse->license_no); ?>
-        <?php endif; ?>
-    </div>
-
-    <div style="margin: 5px 0;">
-        <strong>GSTIN:</strong> <?= htmlspecialchars($company_setting->gstin); ?> | 
-        <strong>State:</strong> <?= htmlspecialchars($company_setting->state_name); ?>
-    </div>
-
-</div>
+                <!-- Right Column: Logo -->
+                <td style="border: none; width: 20%; text-align: right; vertical-align: top;">
+                    <?php 
+                    if (!empty($company_setting->logo)): 
+                        $logo_path = FCPATH . 'assets/images/0/' . $company_setting->logo;
+                        if (file_exists($logo_path)):
+                            $logo_data = base64_encode(file_get_contents($logo_path));
+                    ?>
+                        <img src="data:image/png;base64,<?= $logo_data ?>" 
+                             style="width: 140px; height: auto; object-fit: contain;">
+                    <?php 
+                        endif;
+                    endif; 
+                    ?>
+                </td>
+            </tr>
+            <!-- FULL WIDTH LINE ROW -->
+            <tr>
+                <td colspan="3" style="border: none; padding: 0;">
+                    <hr style="border: 0.5px solid #333; margin: 8px 0;">
+                </td>
+            </tr>
+            <!-- FULL WIDTH ADDRESS ROW -->
+            <tr>
+                <td colspan="3" style="border: none; text-align: center; padding-bottom: 10px;">
+                    <div style="font-size: 10px; line-height: 1.4;">
+                        <?= htmlspecialchars($warehouse->address_line1); ?><br>
+                        <?php if(!empty($warehouse->license_no)): ?>
+                            License No: <?= htmlspecialchars($warehouse->license_no); ?><br>
+                        <?php endif; ?>
+                        <strong>GSTIN:</strong> <?= htmlspecialchars($company_setting->gstin); ?> | 
+                        <strong>State:</strong> <?= htmlspecialchars($company_setting->state_name); ?>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
         <!-- Invoice and Transport Details -->
          <table class="items-table">
@@ -291,31 +302,30 @@
             </tr>
             <?php } ?>
             
-            <!-- Freight Charges -->
-            <?php if($sale->additional_cost_type == 'external'): ?>
-            <tr class="item">
-                <td><?= $i++; ?></td>
-                <td>Freight Charges (External)</td>
-                <td></td>
-                 <td></td>
-                <td>Transport charges</td>
-                <td>N/A</td>
-                <td>N/A</td>
-                <td>1</td>
-                <td>₹ <?= number_format_i($sale->freight_selling_price); ?></td>
-                <td>₹ <?= number_format_i($sale->freight_taxable_value); ?></td>
-                <td>
-                    ₹ <?= number_format_i($sale->freight_tax_amount); ?> 
-                    (<?= $sale->freight_tax_rate; ?>%)
-                </td>
-                <td>₹ <?= number_format_i($sale->freight_sub_total); ?></td>
-            </tr>
-            <?php 
-                // Add freight values to totals
-                $total_taxable_value += $sale->freight_taxable_value;
-                 $total_tax += $sale->freight_tax_amount;
-                $total_subtotal += $sale->freight_sub_total;
-            endif; ?>
+           <?php if(!empty($sale->additional_cost_type)): ?>
+                <tr class="item">
+                    <td><?= $i++; ?></td>
+                    <td>Freight Charges (<?= ucfirst($sale->additional_cost_type); ?>)</td>
+                    <td>Transport</td>
+                    <td>-</td>
+                    <td>Transport charges</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>1.00</td>
+                    <td>₹ <?= number_format_i($sale->freight_selling_price); ?></td>
+                    <td>₹ <?= number_format_i($sale->freight_taxable_value); ?></td>
+                    <td>₹ <?= number_format_i($sale->freight_tax_amount); ?> (<?= $sale->freight_tax_rate; ?>%)</td>
+                    <td>₹ <?= number_format_i($sale->freight_sub_total); ?></td>
+                </tr>
+                <?php 
+                    // Update variables so the Footer Total is correct
+                    $total_taxable_value += (float)$sale->freight_taxable_value;
+                    $total_tax += (float)$sale->freight_tax_amount;
+                    $total_subtotal += (float)$sale->freight_sub_total;
+                ?>
+            <?php endif; ?>
+            
+            
         </table>
         
         <!-- Totals -->

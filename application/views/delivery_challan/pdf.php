@@ -312,26 +312,26 @@
         $profit_margin = ($delivery_challan->total_purchase_cost > 0) ? ($gross_profit_loss / $delivery_challan->total_purchase_cost) * 100 : 0;
         ?>
         <?php if ($delivery_challan->total_purchase_cost > 0 || $total_selling_price > 0): ?>
-            <table>
-                <tr class="heading"><td colspan="4"><strong>Profit/Loss Summary</strong></td></tr>
-                <tr class="details">
-                    <td colspan="2"><strong>Purchase Cost:</strong></td>
-                    <td colspan="2" style="text-align: right;">₹ <?= number_format_i($delivery_challan->total_purchase_cost); ?></td>
-                </tr>
+            <!--<table>-->
+            <!--    <tr class="heading"><td colspan="4"><strong>Profit/Loss Summary</strong></td></tr>-->
+            <!--    <tr class="details">-->
+            <!--        <td colspan="2"><strong>Purchase Cost:</strong></td>-->
+            <!--        <td colspan="2" style="text-align: right;">₹ <?= number_format_i($delivery_challan->total_purchase_cost); ?></td>-->
+            <!--    </tr>-->
               
-                <tr class="details">
-                    <td colspan="2"><strong>Selling Price:</strong></td>
-                    <td colspan="2" style="text-align: right;">₹ <?= number_format_i($total_selling_price); ?></td>
-                </tr>
-                <tr class="details">
-                    <td colspan="2"><strong>Gross <?= $gross_profit_loss >= 0 ? 'Profit' : 'Loss'; ?>:</strong></td>
-                    <td colspan="2" style="text-align: right; color:<?= $gross_profit_loss >= 0 ? 'green' : 'red' ?>;">₹ <?= number_format_i($gross_profit_loss); ?></td>
-                </tr>
-                <tr class="details">
-                    <td colspan="2"><strong>Profit Margin:</strong></td>
-                    <td colspan="2" style="text-align: right; color:<?= $profit_margin >= 0 ? 'green' : 'red' ?>;"><?= number_format_i($profit_margin, 2); ?>%</td>
-                </tr>
-            </table>
+            <!--    <tr class="details">-->
+            <!--        <td colspan="2"><strong>Selling Price:</strong></td>-->
+            <!--        <td colspan="2" style="text-align: right;">₹ <?= number_format_i($total_selling_price); ?></td>-->
+            <!--    </tr>-->
+            <!--    <tr class="details">-->
+            <!--        <td colspan="2"><strong>Gross <?= $gross_profit_loss >= 0 ? 'Profit' : 'Loss'; ?>:</strong></td>-->
+            <!--        <td colspan="2" style="text-align: right; color:<?= $gross_profit_loss >= 0 ? 'green' : 'red' ?>;">₹ <?= number_format_i($gross_profit_loss); ?></td>-->
+            <!--    </tr>-->
+            <!--    <tr class="details">-->
+            <!--        <td colspan="2"><strong>Profit Margin:</strong></td>-->
+            <!--        <td colspan="2" style="text-align: right; color:<?= $profit_margin >= 0 ? 'green' : 'red' ?>;"><?= number_format_i($profit_margin, 2); ?>%</td>-->
+            <!--    </tr>-->
+            <!--</table>-->
         
         <?php endif; ?>                                    
         

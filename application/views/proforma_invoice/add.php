@@ -116,6 +116,55 @@
     #product_table_body input {
     width: 7em !important;
   }
+  
+  .table-responsive {
+    overflow-x: hidden !important; /* Removes the scrollbar */
+}
+
+.table-responsive > table {
+    table-layout: fixed; /* Forces the table to obey the widths we set */
+    width: 100% !important;
+}
+
+.table-responsive > table th {
+    white-space: normal !important; /* Allows text to wrap if column is tight */
+    font-size: 13px;
+    padding: 8px 2px !important;
+    vertical-align: middle;
+}
+
+/* Ensure inputs don't push the column wider than the percentage */
+#product_table_body input, 
+#product_table_body select, 
+#product_table_body textarea {
+    width: 100% !important;
+    min-width: 0; 
+}
+
+/* Force error text to be red and visible */
+.invalid-feedback {
+    display: none;
+    color: #dc3545 !important; /* Standard Bootstrap Red */
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Show the error message when the input has the is-invalid class */
+.is-invalid ~ .invalid-feedback,
+.is-invalid ~ .error {
+    display: block !important;
+}
+
+/* Highlight the input border in red */
+.is-invalid {
+    border-color: #dc3545 !important;
+    background-image: none !important; /* Removes default bootstrap icons if they interfere */
+}
+
+/* Specific fix for Select2 error borders */
+.is-invalid + .select2-container .select2-selection {
+    border-color: #dc3545 !important;
+}
   </style>
   <div class="wrapper">
     <div class="content-wrapper">
@@ -244,7 +293,7 @@
                 <select class="form-control form-control-sm select2bs4 field_validation" name="warehouse_id" id="warehouse_id" width="100%" class="add-row" placeholder="<?=$this->lang->line('purchase_warehouse')?>" required>
                     <option value=""><?=$this->lang->line('select')?></option>
                     <?php foreach ($warehouses as $value): ?>
-                        <option value="<?=$value->id;?>" <?= ($value->id == set_value('warehouse_id')) ? 'selected' : ''; ?>>
+                        <option value="<?=$value->id;?>" <?= ($value->id == set_value('warehouse_id')) ? 'selected' : ''; ?> selected>
                             <?= $value->name;?>
                         </option>
                     <?php endforeach; ?>
@@ -287,10 +336,10 @@
                     <option value="<?= $value->id; ?>" 
                             data-ledger_id="<?= $value->ledger_id ?>" 
                             <?= set_select('customer_id', $value->id); ?>>
-                        <?= $value->customer_name; ?>
-                        <?php if (!empty($value->customer_company_name)): ?>
-                            (<?= $value->customer_company_name; ?>)
-                        <?php endif; ?>
+                        <?= $value->customer_company_name; ?>
+                        <!--<?php if (!empty($value->customer_company_name)): ?>-->
+                        <!--    (<?= $value->customer_company_name; ?>)-->
+                        <!--<?php endif; ?>-->
                     </option>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -321,7 +370,7 @@
     <div class="col-sm-12">
         <div class="form-group">
             <label>Select Shipping Address</label>
-            <select class="form-control form-control-sm" id="shipping_address_select" name="shipping_address_select" required>
+            <select class="form-control form-control-sm" id="shipping_address_select" name="shipping_address_select">
                 <option value="">Select Shipping Address</option>
             </select>
         </div>
@@ -726,31 +775,48 @@
                           <label><?=$this->lang->line('proforma_invoice_items')?></label>
                           <div class="table-responsive" style="max-width: 100%; overflow-x: auto;">
                             <table class="table items table-striped table-bordered table-condensed table-hover product_table" 
-                                   style="min-width: 1200px; table-layout: auto;" id="product_data">
+                                 style="width: 100%;" id="product_data">
+                              <!--<thead>-->
+                              <!--  <tr>-->
+                              <!--    <th style="width: 5%;">-->
+                              <!--      <img src="<?php echo base_url(); ?>assets/images/bin1.png" alt="Bin">-->
+                              <!--    </th>-->
+                              <!--    <th class="span2" width="15%">Product Name</th>-->
+                              <!--    <th class="span2" width="10%">Add Remark</th>-->
+                              <!--    <th class="span2" width="12%">Vendor</th>-->
+                              <!--    <th class="span2" width="8%">Purchase Cost</th>-->
+                              <!--    <th class="span2" width="8%">Qty</th>-->
+                              <!--    <th class="span2 d-none" width="8%">Free Qty</th>-->
+                              <!--    <th class="span2 d-none" width="8%">Total Qty</th>-->
+                              <!--    <th class="span2 d-none" width="10%">Batch</th>-->
+                              <!--    <th class="span2 d-none" width="10%">Margin</th>-->
+                              <!--    <th class="span2 d-none" width="10%">Selling Price</th>-->
+                              <!--    <th class="span2" width="10%">Price</th>-->
+                              <!--    <th class="span2 d-none" width="14%">Discount</th>-->
+                              <!--    <th class="span2" width="11%">UOM</th>-->
+                              <!--    <th class="span2" width="8%">Taxable Value</th>-->
+                              <!--    <th class="span2" width="12%">Tax(₹)</th>-->
+                              <!--    <th class="span2 d-none" width="5%">Inclusive</th>-->
+                              <!--    <th class="span2" width="7%">Total</th>-->
+                              <!--  </tr>-->
+                              <!--</thead>-->
                               <thead>
-                                <tr>
-                                  <th style="width: 5%;">
-                                    <img src="<?php echo base_url(); ?>assets/images/bin1.png" alt="Bin">
-                                  </th>
-                                  <th class="span2" width="15%">Product Name</th>
-                                  <th class="span2" width="10%">Add Remark</th>
-                                  <th class="span2" width="12%">Vendor</th>
-                                  <th class="span2" width="8%">Purchase Cost</th>
-                                  <th class="span2" width="8%">Qty</th>
-                                  <th class="span2 d-none" width="8%">Free Qty</th>
-                                  <th class="span2 d-none" width="8%">Total Qty</th>
-                                  <th class="span2 d-none" width="10%">Batch</th>
-                                  <th class="span2 d-none" width="10%">Margin</th>
-                                  <th class="span2 d-none" width="10%">Selling Price</th>
-                                  <th class="span2" width="10%">Price</th>
-                                  <th class="span2 d-none" width="14%">Discount</th>
-                                  <th class="span2" width="11%">UOM</th>
-                                  <th class="span2" width="8%">Taxable Value</th>
-                                  <th class="span2" width="12%">Tax(₹)</th>
-                                  <th class="span2 d-none" width="5%">Inclusive</th>
-                                  <th class="span2" width="7%">Total</th>
-                                </tr>
-                              </thead>
+                                  <tr>
+                                    <th style="width: 3%;"> <!-- Bin icon -->
+                                      <img src="<?php echo base_url(); ?>assets/images/bin1.png" alt="Bin">
+                                    </th>
+                                    <th style="width: 18%;">Product Name</th>
+                                    <th style="width: 12%;">Add Remark</th>
+                                    <th style="width: 12%;">Vendor</th>
+                                    <th style="width: 10%;">Purchase Cost</th>
+                                    <th style="width: 7%;">Qty</th>
+                                    <th style="width: 8%;">Price</th>
+                                    <th style="width: 7%;">UOM</th>
+                                    <th style="width: 8%;">Taxable Value</th>
+                                    <th style="width: 8%;">Tax(₹)</th>
+                                    <th style="width: 7%;">Total</th>
+                                  </tr>
+                                </thead>
                               <tbody id="product_table_body">
                                 <!-- Dynamic rows go here -->
                               </tbody>
@@ -762,11 +828,14 @@
                             <!-- Transport dropdown -->
                             <tr>
                               <td align="right" width="66%">
-                                <select class="form-control" id="additional_cost_type" name="additional_cost_type" required>
+                                <select class="form-control" id="additional_cost_type" name="additional_cost_type">
                                   <option value="">Select Transport</option>
                                   <option value="internal">Internal</option>
                                   <option value="external">External</option>
                                 </select>
+                              </td>
+                              <td width="34%">
+                                 <input type="number" class="form-control form-control-sm" id="additional_cost_amount" placeholder="Enter Amount" step="any">
                               </td>
                             </tr>
         
@@ -788,6 +857,13 @@
                               </td>
                             </tr>
                             
+                             <tr id="transport_row_summary" style="display:none;">
+                                <td align="right">Transport Charges (Incl. Tax) (₹)</td>
+                                <td align='right' class="text-success">
+                                    +<span id="transport_total_display">0.00</span>
+                                </td>
+                            </tr>
+    
                             <tr class="d-none">
                               <td align="right" width="66%">TDS (₹)</td>
                               <td align='right' class="text-success" width="34%">
@@ -1460,6 +1536,7 @@
       // Service search code begin
 
       var c_mapping = { };
+      var proforma_product_map  = { };
 
 $(function(){
     $('#search_product').autoComplete({
@@ -1483,9 +1560,21 @@ $(function(){
                     var products = data;
                     
                     var suggestions = [];
+                    proforma_product_map  = { };
+                    
+                    // for(var i = 0; i < products.length; ++i) {
+                    //     suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
+                    //     c_mapping[products[i].warehouse_products_id] = products[i].name;
+                    // }
+                    
                     for(var i = 0; i < products.length; ++i) {
-                        suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
-                        c_mapping[products[i].warehouse_products_id] = products[i].name;
+                        // Create a clean display string without the ID at the start
+                        var display_text = products[i].name + ' - ' + products[i].product_category_name + ' - ' + products[i].price;
+                        
+                        suggestions.push(display_text);
+                        
+                        // Link the clean string to the actual ID in memory
+                        proforma_product_map[display_text] = products[i].warehouse_products_id;
                     }
 
                     if(suggestions.length == 0)
@@ -1504,7 +1593,8 @@ $(function(){
         onSelect: function(event, ui) {
             var str = ui.split(' - ');
             
-            var warehouse_products_id = str[0];
+            // var warehouse_products_id = str[0];
+            var warehouse_products_id = proforma_product_map[ui];
 
             $.ajax({
                 url: "<?php echo base_url('product/get_record_detail') ?>",
@@ -2797,7 +2887,7 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
       updateProfitTotals();
     }
 
-    function updateProfitTotals() {
+    function updateProfitTotals2505() {
       var totalPurchaseCost = 0;
       var totalSellingPrice = 0;
       var totalTaxableValue = 0;
@@ -2868,7 +2958,161 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
         transportType: transportType
       };
     }
+    
+    
+    function updateProfitTotals22() {
+            var totalPurchaseCost = 0;
+            var totalSellingPrice = 0;
+            var totalTaxableValue = 0;
+            var totalTax = 0;
+            var transportType = $('#additional_cost_type').val();
+        
+            $("#product_table_body").find('tr').each(function () {
+                var row = $(this);
+                var isFreight = row.find('input[name="freight_id"]').val() === 'freight';
+                
+                if (isFreight) {
+                    // Get values from the freight row
+                    var freightAmount = parseFloat(row.find('input[name="freight_selling_price"]').val()) || 0;
+                    var freightTax = parseFloat(row.find('span[name="freight_i_tax"]').text()) || 0;
+                    var freightSubTotal = parseFloat(row.find('span[name="freight_sub_total"]').text()) || 0;
+        
+                    // FIX: Always add to Selling Price/Taxable because the customer is being charged this
+                    totalTaxableValue += freightAmount;
+                    totalTax += freightTax;
+                    totalSellingPrice += freightSubTotal;
+                    
+                    // Note: We do NOT add freightAmount to totalPurchaseCost here 
+                    // because that represents what you paid the VENDOR for products.
+                } else {
+                    // Handle standard product rows
+                    var vendorWithGst = parseFloat(row.find('input[name="vendor_total_with_gst[]"]').val()) || 0;
+                    totalPurchaseCost += vendorWithGst;
+        
+                    var subTotal = parseFloat(row.find('span[name="sub_total"]').text()) || 0;
+                    totalSellingPrice += subTotal;
+                    
+                    totalTaxableValue += parseFloat(row.find('span[name="taxable_value"]').text()) || 0;
+                    totalTax += (parseFloat(row.find('span[name="i_tax"]').text()) || 0)
+                              + (parseFloat(row.find('span[name="c_tax"]').text()) || 0)
+                              + (parseFloat(row.find('span[name="s_tax"]').text()) || 0);
+                }
+            });
+        
+            // Calculate profit metrics
+            var grossProfitLoss = totalSellingPrice - totalPurchaseCost;
+            var profitMargin = (totalPurchaseCost > 0) ? ((grossProfitLoss / totalPurchaseCost) * 100) : 0;
+        
+            // Update UI Elements
+            $('#total_taxable_value').text(totalTaxableValue.toFixed(2));
+            $('#t_taxable_value').val(totalTaxableValue.toFixed(2));
+            
+            $('#total_tax').text(totalTax.toFixed(2));
+            $('#t_tax').val(totalTax.toFixed(2));
+        
+            $('#total').text(totalSellingPrice.toFixed(2));
+            $('#t').val(totalSellingPrice.toFixed(2));
+        
+            $('#total_purchase_cost').text(totalPurchaseCost.toFixed(2));
+            $('#t_purchase_cost').val(totalPurchaseCost.toFixed(2));
+        
+            $('#total_selling_price').text(totalSellingPrice.toFixed(2));
+            $('#t_selling_price').val(totalSellingPrice.toFixed(2));
+        
+            $('#gross_profit_loss').text(grossProfitLoss.toFixed(2));
+            $('#t_profit_loss').val(grossProfitLoss.toFixed(2));
+            
+            $('#profit_margin').text(profitMargin.toFixed(2) + '%');
+        
+            return {
+                totalPurchaseCost: totalPurchaseCost,
+                totalSellingPrice: totalSellingPrice,
+                grossProfitLoss: grossProfitLoss,
+                profitMargin: profitMargin
+            };
+        }
+        
+    function updateProfitTotals() {
+            var productBasePurchaseTotal = 0; // Tax-Free
+            var productBaseSellingTotal = 0;  // Tax-Free
+            var productTaxTotal = 0;
+            var freightTotalWithTax = 0;
+        
+            $("#product_table_body tr").each(function () {
+                var row = $(this);
+                var isFreight = row.find('input[name="freight_id"]').val() === 'freight';
+                
+                if (isFreight) {
+                    var freightBase = parseFloat(row.find('input[name="freight_selling_price"]').val()) || 0;
+                    var freightTax = parseFloat(row.find('span[name="freight_i_tax"]').text()) || 0;
+                    freightTotalWithTax = freightBase + freightTax;
+                } else {
+                    var qty = parseFloat(row.find('input[name^="quantity"]').val()) || 0;
+                    
+                    // Purchase Base (Tax-Free)
+                    var unitCost = parseFloat(row.find('input[name="vendor_cost"]').val()) || 0;
+                    productBasePurchaseTotal += (unitCost * qty);
+        
+                    // Selling Base (Tax-Free)
+                    var unitPrice = parseFloat(row.find('input[name^="price"]').val()) || 0;
+                    productBaseSellingTotal += (unitPrice * qty);
+                    
+                    // Sum only Product Tax
+                    productTaxTotal += (parseFloat(row.find('span[name^="i_tax"]').text()) || 0)
+                                     + (parseFloat(row.find('span[name^="c_tax"]').text()) || 0)
+                                     + (parseFloat(row.find('span[name^="s_tax"]').text()) || 0);
+                }
+            });
+        
+            // Update Summary Table
+            $('#total_taxable_value').text(productBaseSellingTotal.toFixed(2));
+            $('#t_taxable_value').val(productBaseSellingTotal.toFixed(2));
+            
+            $('#total_tax').text(productTaxTotal.toFixed(2));
+            $('#t_tax').val(productTaxTotal.toFixed(2));
+        
+            // Handle Transport Charges Row
+            if (freightTotalWithTax > 0) {
+                $('#transport_row_summary').show();
+                $('#transport_total_display').text(freightTotalWithTax.toFixed(2));
+            } else {
+                $('#transport_row_summary').hide();
+            }
+        
+            // Grand Total (Selling Base + Product Tax + Total Freight)
+            var grandTotal = productBaseSellingTotal + productTaxTotal + freightTotalWithTax;
+            $('#total').text(grandTotal.toFixed(2));
+            $('#t').val(grandTotal.toFixed(2));
+        
+            // Update Profit/Loss Table (TAX FREE)
+            $('#total_purchase_cost').text(productBasePurchaseTotal.toFixed(2));
+            $('#t_purchase_cost').val(productBasePurchaseTotal.toFixed(2));
+        
+            $('#total_selling_price').text(productBaseSellingTotal.toFixed(2));
+            $('#t_selling_price').val(productBaseSellingTotal.toFixed(2));
+        
+            var grossProfit = productBaseSellingTotal - productBasePurchaseTotal;
+            var margin = (productBasePurchaseTotal > 0) ? (grossProfit / productBasePurchaseTotal) * 100 : 0;
+        
+            $('#gross_profit_loss').text(grossProfit.toFixed(2));
+            $('#t_profit_loss').val(grossProfit.toFixed(2));
+            $('#profit_margin').text(margin.toFixed(2) + '%');
+        
+            return {
+                purchaseBase: productBasePurchaseTotal,
+                sellingBase: productBaseSellingTotal,
+                grossProfit: grossProfit
+            };
+        }
 
+        $(document).on('input keyup change', 'input[name="freight_selling_price"]', function() {
+                var amount = parseFloat($(this).val()) || 0;
+                var type = $('#additional_cost_type').val();
+                
+                // Update the row calculation (Tax and Subtotal) before updating grand totals
+                updateFreightValues(type, amount); 
+            });
+            
     //   function calculateGrandTotal()
     //   {
     //     var total_taxable_value = 0.0;
@@ -3661,7 +3905,7 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
       // If freight row already exists, don't add it again
       if ($('.freight-row').length > 0) return;
 
-      let taxRate = (type === 'external') ? 18 : 0;
+      let taxRate = (type === 'external') ? 0 : 0;
       let taxableValue = amount;
       let taxAmount = 0;
       let subTotal = amount;
@@ -3707,7 +3951,7 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
       $("table.product_table tbody#product_table_body").append(newRow);
     }
 
-    function updateFreightValues(type, amount) {
+    function updateFreightValues12505(type, amount) {
       let taxRate = (type === 'external') ? 18 : 0;
       let taxableValue = amount;
       let taxAmount = 0;
@@ -3735,6 +3979,46 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
 
       updateProfitTotals();
     }
+    
+    function updateFreightValues26(type, amount) {
+        let taxRate = (type === 'external') ? 18 : 0;
+        let taxAmount = (amount * taxRate) / 100;
+        let subTotal = amount + taxAmount;
+    
+        let row = $('.freight-row');
+        row.find('span[name="freight_taxable_value"]').text(amount.toFixed(2));
+        
+        if (type === 'external') {
+            row.find('.tax_td').html('IGST : <span name="freight_i_tax">' + taxAmount.toFixed(2) + '</span> (18%)');
+        } else {
+            row.find('.tax_td').html('N/A <span name="freight_i_tax" style="display:none">0.00</span>');
+        }
+    
+        row.find('span[name="freight_sub_total"]').text(subTotal.toFixed(2));
+    
+        // Now call the grand total function
+        updateProfitTotals();
+    }
+    
+    function updateFreightValues(type, amount) {
+    let taxRate = (type === 'external') ? 0 : 0;
+    let taxAmount = (amount * taxRate) / 100;
+    let subTotal = amount + taxAmount;
+
+    let row = $('.freight-row');
+    row.find('span[name="freight_taxable_value"]').text(amount.toFixed(2));
+    
+    if (type === 'external') {
+        row.find('.tax_td').html('IGST : <span name="freight_i_tax">' + taxAmount.toFixed(2) + '</span>');
+    } else {
+        row.find('.tax_td').html('N/A <span name="freight_i_tax" style="display:none">0.00</span>');
+    }
+
+    row.find('span[name="freight_sub_total"]').text(subTotal.toFixed(2));
+
+    // Force recalculate the summary table
+    updateProfitTotals();
+}
 
     // On change of cost type dropdown
     $('#additional_cost_type').change(function () {
@@ -3758,14 +4042,53 @@ function add_row(product, discounts, batch_nos, vendors, quantity = null, ordere
       }
     });
 
-    $(document).on('input', '.freight-amount', function () {
-      let newAmount = parseFloat($(this).val()) || 0;
-      let type = $('#additional_cost_type').val();
-      updateFreightValues(type, newAmount);
+   $(document).on('input keyup change', '.freight-amount', function () {
+        let newAmount = parseFloat($(this).val()) || 0;
+        let type = $('#additional_cost_type').val();
+        // Update the UI for the row
+        let row = $(this).closest('tr');
+        let taxRate = (type === 'external') ? 18 : 0;
+        let taxAmount = (newAmount * taxRate) / 100;
+        let subTotal = newAmount + taxAmount;
+    
+        row.find('span[name="freight_taxable_value"]').text(newAmount.toFixed(2));
+        row.find('span[name="freight_i_tax"]').text(taxAmount.toFixed(2));
+        row.find('span[name="freight_sub_total"]').text(subTotal.toFixed(2));
+    
+        updateProfitTotals(); // Recalculate the bottom table
     });
-
       
-      
+      // 1. When you type in the Table Row, update the input box next to the dropdown
+        $(document).on('input', '.freight-amount', function () {
+            let amount = $(this).val();
+            $('#additional_cost_amount').val(amount);
+        });
+        
+        // 2. When you type in the box next to the dropdown, update the Table Row
+        $('#additional_cost_amount').on('input', function () {
+            let amount = parseFloat($(this).val()) || 0;
+            let type = $('#additional_cost_type').val();
+            
+            // Update the input field inside the table row
+            $('.freight-amount').val($(this).val());
+            
+            if (type) {
+                updateFreightValues(type, amount);
+            }
+        });
+        
+        // 3. Ensure the dropdown change also pulls the amount from the box
+        $('#additional_cost_type').change(function () {
+            const type = $(this).val();
+            const amount = parseFloat($('#additional_cost_amount').val()) || 0;
+            
+            $('.freight-row').remove();
+            
+            if (type) {
+                addFreightRow(type, amount);
+                updateProfitTotals();
+            }
+        });
       
   });
 </script>

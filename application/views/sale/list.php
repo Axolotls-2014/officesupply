@@ -153,7 +153,7 @@
                     <th width="2%"><input type="checkbox" class="all_sale"></th>
                     <th>Inv No.</th>
                     <th><?=$this->lang->line('sale_invoice_date')?></th>
-                    <th>Customer Name</th>
+                    <th>Company Name</th>
                     <!--<th class="d-none"><?="Discount" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>-->
                     <th><?="Taxable Value" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>
                     <th><?="GST" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>

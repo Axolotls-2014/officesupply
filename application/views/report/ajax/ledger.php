@@ -50,7 +50,7 @@ if(isset($ledger_detail) && !empty($ledger_detail)) {
                 <th>Total</th>
                 <th>Received/Paid</th>
                 <th>Txn Balance</th>
-                <th>Receivable Balance</th>
+                <th>Running Balance</th>
             </tr>
         </thead>
         <tbody>

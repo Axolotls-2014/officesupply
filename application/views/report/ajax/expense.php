@@ -1,70 +1,78 @@
-<table class="sticky-header-table table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th><?=$this->lang->line('expense_date')?></th>
-      <th><?=$this->lang->line('expense_expense_category')?></th>
-      <th><?=$this->lang->line('expense_supplier')?></th>
-      <th><?=$this->lang->line('expense_amount').'('.$this->session->userdata('currency_symbol').')'?></th>
-      <th><?=$this->lang->line('expense_cgst').'('.$this->session->userdata('currency_symbol').')'?></th>
-      <th><?=$this->lang->line('expense_sgst').'('.$this->session->userdata('currency_symbol').')'?></th>
-      <th><?=$this->lang->line('expense_igst').'('.$this->session->userdata('currency_symbol').')'?></th>
-      <th><?=$this->lang->line('expense_total_amount').'('.$this->session->userdata('currency_symbol').')'?></th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php
+<table class="table table-bordered table-striped m-0" id="expense-data">
+        <thead>
+            <tr>
+                <th>Bill Date</th>
+                <th>Expense Category</th>
+                <th>Expense Name</th>
+                <th>Paid To</th>
+                <th>Payment Mode</th>
+                <th class="text-right">Taxable Amount(₹)</th>
+                <th class="text-right">CGST(₹)</th>
+                <th class="text-right">SGST(₹)</th>
+                <th class="text-right">IGST(₹)</th>
+                <th class="text-right">Total Amount(₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $t_taxable = 0; $t_cgst = 0; $t_sgst = 0; $t_igst = 0; $t_grand = 0;
+            $filter_status = $this->input->post('status');
 
-    	$total_amount 		= 0;
-    	$total_cgst   		= 0;
-    	$total_sgst 			= 0;
-    	$total_igst 			= 0;
-    	$total_t_amount 	= 0;
+            if (!empty($expenses)) {
+                foreach ($expenses as $value) {
+                    // 1. Calculate Tax Values
+                    $cgst_amt = ($value->amount * (float)$value->cgst) / 100;
+                    $sgst_amt = ($value->amount * (float)$value->sgst) / 100;
+                    $igst_amt = ($value->amount * (float)$value->igst) / 100;
+                    $row_total = (float)$value->total_amount;
 
-      if(sizeof($expenses) > 0)
-      {
-        foreach ($expenses as $value) 
-        {
-        	$cgst 					= ($value->amount*$value->cgst)/100;
-        	$sgst 					= ($value->amount*$value->sgst)/100;
-        	$igst 					= ($value->amount*$value->igst)/100;
+                    // 2. Identify Payment Mode Label
+                    $modes = [0=>"Cash", 1=>"Card", 2=>"Cheque", 3=>"NEFT/RTGS"];
+                    $p_mode = isset($modes[$value->payment_mode]) ? $modes[$value->payment_mode] : "N/A";
 
-        	$total_amount 	+= $value->amount;
-        	$total_cgst   	+= $cgst;
-        	$total_sgst   	+= $sgst;
-        	$total_igst   	+= $igst;
-        	$total_t_amount += $value->total_amount;
-    ?>
-    <tr>                        
-      <td><?php echo date('d-m-Y', strtotime($value->date));?></td>
-      <td><?php echo $value->expense_category_name;?></td>
-      <td><?php echo $value->company_name;?></td>
-      <td><?php echo number_format_i($value->amount);?></td>
-      <td><?php echo number_format_i($cgst);?></td>
-      <td><?php echo number_format_i($sgst);?></td>
-      <td><?php echo number_format_i($igst);?></td>
-      <td><?php echo number_format_i($value->total_amount);?></td>
-    </tr>
-    <?php  
-        }
-      }
-      else
-      {
-    ?>
-    <tr>
-      <td colspan="8"><?=$this->lang->line('no_records_available')?></td>
-    </tr>
-    <?php
-      }
-    ?>
-  </tbody>
-  <tfoot  class="">
-  	<tr>
-  		<th colspan="3"></th>
-      <th><?=$this->session->userdata('currency_symbol').' '.number_format_i($total_amount)?></th>
-      <th><?=$this->session->userdata('currency_symbol').' '.number_format_i($total_cgst)?></th>
-      <th><?=$this->session->userdata('currency_symbol').' '.number_format_i($total_sgst)?></th>
-      <th><?=$this->session->userdata('currency_symbol').' '.number_format_i($total_igst)?></th>
-      <th><?=$this->session->userdata('currency_symbol').' '.number_format_i($total_t_amount);?>
-  	</tr>
-  </tfoot>
-</table> 
+                    // 3. Payment Status Logic
+                    $paid = round($this->transaction_model->get_total_transaction_amount($value->id, 'E', 'P'), 2);
+                    if($paid >= round($row_total, 2)) $curr_status = 'Paid';
+                    elseif($paid > 0) $curr_status = 'Partial';
+                    else $curr_status = 'Unpaid';
+
+                    // 4. Status Filter Check
+                    if (!empty($filter_status) && $filter_status !== $curr_status) continue;
+
+                    // Sum totals for Footer
+                    $t_taxable += $value->amount;
+                    $t_cgst    += $cgst_amt;
+                    $t_sgst    += $sgst_amt;
+                    $t_igst    += $igst_amt;
+                    $t_grand   += $row_total;
+            ?>
+                <tr>
+                    <td><?= date('d-m-Y', strtotime($value->date)); ?></td>
+                    <td><?= $value->expense_category_name; ?></td>
+                    <td><?= $value->name; // or $value->description ?></td>
+                    <td><?= $value->company_name; ?></td>
+                    <td><?= $p_mode; ?></td>
+                    <td class="text-right"><?= number_format($value->amount, 2); ?></td>
+                    <td class="text-right"><?= number_format($cgst_amt, 2); ?></td>
+                    <td class="text-right"><?= number_format($sgst_amt, 2); ?></td>
+                    <td class="text-right"><?= number_format($igst_amt, 2); ?></td>
+                    <td class="text-right"><strong><?= number_format($row_total, 2); ?></strong></td>
+                </tr>
+            <?php
+                }
+            } else {
+                echo '<tr><td colspan="10" class="text-center">No Record Found</td></tr>';
+            }
+            ?>
+        </tbody>
+        <tfoot class="footer_data">
+            <tr>
+                <th colspan="5" class="text-right">Total:</th>
+                <th class="text-right"><?= number_format($t_taxable, 2) ?></th>
+                <th class="text-right"><?= number_format($t_cgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_sgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_igst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_grand, 2) ?></th>
+            </tr>
+        </tfoot>
+    </table>

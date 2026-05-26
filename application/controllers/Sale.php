@@ -5265,10 +5265,14 @@ if ($item->delete_status == DELETED) {
 
 
     
-                 $customer_name_html = '<a href="' . base_url('customer/view/' . base64_encode($item->customer_id)) . '" data-tt="tooltip" title="' . $this->lang->line('sale_view_customer_detail') . '">'
-    . $item->customer_name . ' (' . ($item->customer_company_name ?? '-') . ')</a>';
+    //              $customer_name_html = '<a href="' . base_url('customer/view/' . base64_encode($item->customer_id)) . '" data-tt="tooltip" title="' . $this->lang->line('sale_view_customer_detail') . '">'
+    // . $item->customer_name . ' (' . ($item->customer_company_name ?? '-') . ')</a>';
 
+$displayName = !empty($item->customer_company_name) ? $item->customer_company_name : $item->customer_name;
+$subName = !empty($item->customer_company_name) ? " ($item->customer_name)" : "";
 
+$customer_name_html = '<a href="' . base_url('customer/view/' . base64_encode($item->customer_id)) . '" data-tt="tooltip" title="' . $this->lang->line('sale_view_customer_detail') . '">'
+    . $displayName . '</a>';
                                   
         				/* End Action column buttons*/
         

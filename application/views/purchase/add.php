@@ -1602,6 +1602,7 @@ $(document).ready(function(e) {
     // product search code begin
 
     var c_mapping = {};
+    var item_id_map = {}; // Hidden map to store IDs for selection
 
     $(function() {
 
@@ -1623,12 +1624,25 @@ $(document).ready(function(e) {
                     success: function(data) {
                         var products = data;
                         var suggestions = [];
+                        // for (var i = 0; i < products.length; ++i) {
+                        //     suggestions.push(products[i].id + ' - ' + products[
+                        //             i].name + ' - ' + products[i]
+                        //         .product_category_name);
+                        //     c_mapping[products[i].id] = products[i].name;
+                        // }
+                        // Around line 699, find this loop and replace it:
                         for (var i = 0; i < products.length; ++i) {
-                            suggestions.push(products[i].id + ' - ' + products[
-                                    i].name + ' - ' + products[i]
-                                .product_category_name);
+                            // 1. Create text WITHOUT the ID
+                            var display_text = products[i].name + ' - ' + products[i].product_category_name;
+                            
+                            // 2. Add only the clean text to the UI
+                            suggestions.push(display_text);
+                            
+                            // 3. Store the ID in the background mapping
+                            item_id_map[display_text] = products[i].id;
                             c_mapping[products[i].id] = products[i].name;
                         }
+                        
                         suggest(suggestions);
                     }
                 });
@@ -1636,7 +1650,9 @@ $(document).ready(function(e) {
             onSelect: function(event, ui) {
                 var str = ui.split(' - ');
 
-                var product_id = str[0];
+                var product_id = item_id_map[ui]; // Gets the ID that matches the clicked text
+
+                // var product_id = str[0];
 
                 $.ajax({
                     url: "<?php echo base_url('product/get_record_detail') ?>",

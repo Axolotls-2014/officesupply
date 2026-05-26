@@ -302,6 +302,61 @@ public function add_product($id = NULL)
     }
 }
 
+    public function dashboard_add_product() {
+        // 1. Permission check
+        if (!$this->permission_model->has_permission('add_product')) {
+            echo json_encode(['code' => 0, 'message' => 'Restricted Access']);
+            return;
+        }
+    
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            // 2. SAVE LOGIC
+            $this->db->trans_begin();
+            
+            $data = array(
+                "name"                => $this->input->post('name'),
+                "product_code"        => $this->input->post('product_code'),
+                "description"         => $this->input->post('description'),
+                "product_category_id" => $this->input->post('product_category_id'),
+                "hsn"                 => $this->input->post('hsn'),
+                "cost"                => $this->input->post('cost'),
+                "price"               => $this->input->post('price'),
+                "selling_price"       => $this->input->post('selling_price'),
+                "alert_quantity"      => $this->input->post('alert_quantity'),
+                "uom_id"              => $this->input->post('uom_id'),
+                "status"              => $this->input->post('status'),
+                "product_image"       => $this->input->post('product_image'),
+                "manage_inventory"    => $this->input->post('manage_inventory'),
+                "user_id"             => $this->session->userdata('user_id')
+            );
+    
+            $product_id = $this->product_core_model->add_record($data);
+            
+            if ($product_id) {
+                // Generate Sequence PID (standard for your system)
+                $pid = PID_SEQUENCE + $product_id;
+                $this->product_core_model->edit_record(['pid' => $pid], $product_id);
+                
+                $this->db->trans_commit();
+                echo json_encode(['code' => 1, 'message' => 'Product created successfully!']);
+            } else {
+                $this->db->trans_rollback();
+                echo json_encode(['code' => 0, 'message' => 'Failed to save to database.']);
+            }
+        } else {
+            // 3. LOAD FORM LOGIC
+            $data['product_categories'] = $this->product_category_model->get_records();
+            $data['uoms'] = $this->uom_model->get_records();
+    
+            $response = [
+                'code' => 1,
+                // Calling your specified view path
+                'add_product_modal_body' => $this->load->view('product/ajax/add_product_modal_body', $data, TRUE)
+            ];
+            echo json_encode($response);
+        }
+    }
+
 	/*public function add($id = NULL)
 {
     if(!$this->permission_model->has_permission('add_product'))

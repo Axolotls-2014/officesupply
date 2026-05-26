@@ -1482,6 +1482,7 @@
       // product search code begin
 
       var c_mapping = { };
+      var product_name_to_id = {};
 
       $(function(){
   
@@ -1503,9 +1504,15 @@
               success: function(data){
                 var products = data;
                 var suggestions = [];
-                for(var i = 0; i < products.length; ++i) {
-                  suggestions.push(products[i].id+' - '+products[i].name+' - '+products[i].product_category_name);
-                  c_mapping[products[i].id] = products[i].name;
+                 product_name_to_id = {};
+                 for(var i = 0; i < products.length; ++i) {
+                  // Create the display text without the ID
+                  var display_text = products[i].name + ' - ' + products[i].product_category_name;
+                  
+                  suggestions.push(display_text);
+                  
+                  // Save the ID into our map using the text as the key
+                  product_name_to_id[display_text] = products[i].id;
                 }
                 suggest(suggestions);
               }
@@ -1514,7 +1521,8 @@
           onSelect: function(event, ui) {
             var str = ui.split(' - ');
             
-            var product_id = str[0];
+            // var product_id = str[0];
+            var product_id = product_name_to_id[ui];
            
             $.ajax({
               url: "<?php echo base_url('product/get_record_detail') ?>",

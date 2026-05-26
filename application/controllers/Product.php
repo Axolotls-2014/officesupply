@@ -1390,8 +1390,18 @@ public function ajax_list()
             $product_status .= '<span class="badge badge-danger">'.ucfirst(PRODUCT_STATUS_INACTIVE).'</span>';
 
         // Checkbox for bulk actions
-        $select_product_html = '<input type="checkbox" class="single_product" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$item->id.'"><input type="hidden" name="product_id" id="product_id" data-warehouse_product_id="'.$item->warehouse_product_id.'" value="'.$item->id.'">';
+        // $select_product_html = '<input type="checkbox" class="single_product" data-warehouse_product_id="'.$item->warehouse_product_id.'" data-product_id="'.$item->id.'"><input type="hidden" name="product_id" id="product_id" data-warehouse_product_id="'.$item->warehouse_product_id.'" value="'.$item->id.'">';
+        $warehouse_product = $this->warehouse_products_model->get_single_record($item->warehouse_product_id);
 
+       $select_product_html = '<input type="checkbox" class="single_product" 
+                                data-warehouse_product_id="'.$item->warehouse_product_id.'" 
+                                data-product_id="'.$item->id.'">
+                            <input type="hidden" name="product_id" id="product_id" 
+                                data-warehouse_product_id="'.$item->warehouse_product_id.'" 
+                                data-product_id="'.$item->id.'"
+                                data-warehouse_id="'.$warehouse_product->warehouse_id.'"
+                                value="'.$item->id.'">';
+            
         // // Calculate values
         // $available_qty = $item->quantity;
         // $purchase_price = $item->product_cost;  // Purchase Price (Base price)
@@ -1412,7 +1422,8 @@ public function ajax_list()
 
         // Use Warehouse Cost, Fallback to Master Cost if 0
         $purchase_price = ((float)$item->product_cost > 0) ? (float)$item->product_cost : (float)$item->master_cost;
-
+        // $actual_selling_price = ((float)$item->selling_price > 0) ? (float)$item->selling_price : (float)$item->master_selling_price;
+        $actual_selling_price = (float)$item->master_selling_price;
         // Use Warehouse Price, Fallback to Master Price if 0
         $mrp = ((float)$item->product_price > 0) ? (float)$item->product_price : (float)$item->master_price;
 
@@ -1443,7 +1454,9 @@ public function ajax_list()
         $row[] = $item->batch_no;                  // Batch No
         $row[] = $item->uom_name;                  // UOM
         $row[] = number_format($item->alert_quantity, 0); // Alert Qty
-        $row[] = number_format($mrp, 2);           // MRP
+        // $row[] = number_format($mrp, 2);           // MRP
+        $row[] = number_format($actual_selling_price, 2); // 8 (This fills the SALE PRICE card)
+
         $row[] = number_format($purchase_price, 2); // Purchase Price
         $row[] = number_format($taxable_value, 2);  // Taxable Value (Base price × Qty)
         $row[] = number_format($total_amount_with_gst, 2);   // Total Amount (Taxable Value + GST)
@@ -1522,7 +1535,7 @@ public function ajax_list()
 //     echo json_encode(["draw" => intval($this->input->post('draw')), "recordsTotal" => count($data), "recordsFiltered" => count($data), "data" => $data]);
 // }
 
-public function ajax_list_stock() {
+public function ajax_list_stock1305() {
     $from_input = $this->input->post('from_date');
     $to_input   = $this->input->post('to_date');
     
@@ -1609,6 +1622,48 @@ public function ajax_list_stock() {
         "recordsFiltered" => count($data), 
         "data" => $data
     ]);
+}
+
+public function ajax_list_stock() {
+    $pid = $this->input->post('product_id');
+    $list = $this->product_model->get_all_movements_ledger(date('Y-m-d'), $pid);
+    
+    $running_stock = 0;
+    $processed_data = [];
+
+    foreach ($list as $item) {
+        $item->closing_stock = $running_stock + $item->in_qty - $item->out_qty;
+        $unit_rate = ($item->pur_price > 0) ? $item->pur_price : $item->p_master_cost;
+        $item->closing_value = $item->closing_stock * $unit_rate;
+        $running_stock = $item->closing_stock;
+        $processed_data[] = $item;
+    }
+
+    $processed_data = array_reverse($processed_data); // Newest at top
+    $data = [];
+
+    foreach ($processed_data as $item) {
+        $row = [
+            date('d-m-Y', strtotime($item->date)), // 0
+            $item->type,                            // 1
+            $item->ref,                             // 2
+            $item->p_code,                          // 3
+            $item->p_name,                          // 4
+            $item->p_hsn,                           // 5
+            $item->p_uom,                           // 6
+            $item->p_alert,                         // 7
+            number_format($item->p_mrp, 2),         // 8
+            number_format($item->pur_price, 2),     // 9
+            number_format($item->sale_price, 2),    // 10
+            $item->in_qty,                          // 11
+            $item->out_qty,                         // 12
+            "<b>".$item->closing_stock."</b>",      // 13
+            "<b>".number_format($item->closing_value, 2)."</b>", // 14
+            $item->p_status                         // 15
+        ];
+        $data[] = $row;
+    }
+    echo json_encode(["draw" => intval($this->input->post('draw')), "recordsTotal" => count($data), "recordsFiltered" => count($data), "data" => $data]);
 }
 
 	public function ajax_list2704()

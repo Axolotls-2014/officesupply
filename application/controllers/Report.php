@@ -211,7 +211,7 @@ private function export_stock_movement_pdf($movements, $totals, $from_date, $to_
   }
 
 
-    public function closing_stock()
+    public function closing_stock01705()
         {
             $from_date = $this->input->post('from_date');
             $to_date = $this->input->post('to_date');
@@ -305,6 +305,202 @@ private function export_stock_movement_pdf($movements, $totals, $from_date, $to_
             
             $this->load->view('report/closing_stock', $data);
         }
+        
+        public function closing_stock2605()
+{
+    $from_date = $this->input->post('from_date');
+    $to_date = $this->input->post('to_date');
+    $pid = $this->input->post('pid');
+    $warehouse_id = $this->input->post('warehouse_id');
+
+    // Default dates if not provided
+    $to_date_db = ($to_date) ? date('Y-m-d', strtotime($to_date)) : date('Y-m-d');
+    $from_date_db = ($from_date) ? date('Y-m-d', strtotime($from_date)) : date('Y-m-d', strtotime('-1 month'));
+
+    // 1. Fetch movements. 
+    // IMPORTANT: Ensure your Model SQL orders by date ASC and Priority ASC.
+    $report_data = $this->report_model->get_stock_movements($from_date_db, $to_date_db, $pid, $warehouse_id);
+
+    // Initializing grand total counters for the footer
+    $total_opening_quantity = 0;
+    $total_opening_cost = 0;
+    $total_closing_quantity = 0;
+    $total_closing_cost = 0;
+
+    $running_balances = array();
+    $current_product_rate = array(); 
+    $final_state_per_product = array();
+
+    if (!empty($report_data)) {
+        foreach ($report_data as $row) {
+            $p_id = $row->product_id;
+
+            // 2. DETERMINE THE VALUATION RATE (The "Cost" of the item)
+            // We use the 'tran_unit_cost' which is the base price (e.g., 10.00) 
+            // set during the transaction, not the subtotal which might include tax.
+            $unit_rate = (float)$row->tran_unit_cost;
+
+            // Update the "latest known rate" for this product if this is an IN transaction
+            if ($row->in_qty > 0 && $unit_rate > 0) {
+                $current_product_rate[$p_id] = $unit_rate;
+            }
+
+            // 3. HANDLE OPENING BALANCE (First time we see this product in the loop)
+            if (!isset($running_balances[$p_id])) {
+                $opening = $this->report_model->get_opening_stock_before_date($from_date_db, $p_id, $warehouse_id);
+                $running_balances[$p_id] = $opening;
+
+                // Determine the valuation rate for the Opening Qty
+                // If we don't have a transaction rate yet, we'll use the one from this first row
+                $op_valuation_rate = (isset($current_product_rate[$p_id])) ? $current_product_rate[$p_id] : $unit_rate;
+
+                $total_opening_quantity += $opening;
+                $total_opening_cost += ($opening * $op_valuation_rate);
+            }
+
+            // 4. CALCULATE ROW-LEVEL STOCK AND VALUE
+            $row->opening_qty = $running_balances[$p_id];
+            
+            // Closing Stock = Opening + In - Out
+            $row->closing_stock = $row->opening_qty + (float)$row->in_qty - (float)$row->out_qty;
+            
+            // VALUATION: We use the most recent purchase rate for the valuation of the closing stock
+            $val_rate = (isset($current_product_rate[$p_id])) ? $current_product_rate[$p_id] : $unit_rate;
+            $row->closing_value = $row->closing_stock * $val_rate;
+
+            // 5. UPDATE TRACKERS
+            $running_balances[$p_id] = $row->closing_stock;
+            
+            // Save the final state for this product (used for footer grand totals)
+            $final_state_per_product[$p_id] = [
+                'qty' => $row->closing_stock,
+                'val' => $row->closing_value
+            ];
+        }
+
+        // 6. PREPARE FOR DISPLAY
+        // We reverse the array so the NEWEST transactions appear at the TOP of the table
+        $report_data = array_reverse($report_data); 
+
+        // 7. CALCULATE FOOTER GRAND TOTALS
+        // We sum the last known state of every unique product involved in the report
+        foreach ($final_state_per_product as $final) {
+            $total_closing_quantity += $final['qty'];
+            $total_closing_cost += $final['val'];
+        }
+    }
+
+    // Pass data to the view
+    $data = array(
+        'from_date' => $from_date,
+        'to_date' => $to_date,
+        'sel_pid' => $pid,
+        'sel_wh' => $warehouse_id,
+        'report_data' => $report_data,
+        'products' => $this->product_core_model->get_records(),
+        'warehouses' => $this->warehouse_model->get_records(),
+        'title' => 'Stock Movement Summary',
+        'total_opening_quantity' => $total_opening_quantity,
+        'total_opening_cost' => $total_opening_cost,
+        'total_closing_quantity' => $total_closing_quantity,
+        'total_closing_cost' => $total_closing_cost
+    );
+    
+    $this->load->view('report/closing_stock', $data);
+}
+
+
+public function closing_stock()
+{
+    $from_date = $this->input->post('from_date');
+    $to_date = $this->input->post('to_date');
+    $pid = $this->input->post('pid');
+    $warehouse_id = $this->input->post('warehouse_id');
+
+    $to_date_db = ($to_date) ? date('Y-m-d', strtotime($to_date)) : date('Y-m-d');
+    $from_date_db = ($from_date) ? date('Y-m-d', strtotime($from_date)) : date('Y-m-d', strtotime('-1 month'));
+
+    // 1. Fetch movements (Model must use Priority sorting and p.cost as tran_unit_cost)
+    $report_data = $this->report_model->get_stock_movements($from_date_db, $to_date_db, $pid, $warehouse_id);
+
+    $total_opening_quantity = 0;
+    $total_opening_cost = 0;
+    $total_closing_quantity = 0;
+    $total_closing_cost = 0;
+
+    $running_balances = array();
+    $final_state_per_product = array();
+
+    if (!empty($report_data)) {
+        foreach ($report_data as $row) {
+            $p_id = $row->product_id;
+
+            /* 
+               FIX: We use 'tran_unit_cost' which is the Master Cost (₹10.00). 
+               We no longer "update" this rate based on transaction types.
+            */
+            $master_cost = (float)$row->tran_unit_cost;
+
+            // 2. HANDLE OPENING BALANCE
+            if (!isset($running_balances[$p_id])) {
+                $opening = $this->report_model->get_opening_stock_before_date($from_date_db, $p_id, $warehouse_id);
+                $running_balances[$p_id] = $opening;
+
+                // OPENING VALUATION: Use Master Cost
+                $total_opening_quantity += $opening;
+                $total_opening_cost += ($opening * $master_cost);
+            }
+
+            // 3. CALCULATE ROW-LEVEL STOCK
+            $row->opening_qty = $running_balances[$p_id];
+            
+            // Closing Stock = Opening + In - Out
+            $row->closing_stock = $row->opening_qty + (float)$row->in_qty - (float)$row->out_qty;
+            
+            /* 
+               VALUATION FIX: Always multiply Closing Stock by Master Cost (₹10.00).
+               This prevents a ₹20.00 Sales Return from inflating the value.
+            */
+            $row->closing_value = $row->closing_stock * $master_cost;
+
+            // 4. UPDATE TRACKERS
+            $running_balances[$p_id] = $row->closing_stock;
+            
+            // Save final state for footer totals
+            $final_state_per_product[$p_id] = [
+                'qty' => $row->closing_stock,
+                'val' => $row->closing_value
+            ];
+        }
+
+        // 5. REVERSE FOR DISPLAY
+        // Newest at top, but math was done chronologically
+        $report_data = array_reverse($report_data); 
+
+        // 6. CALCULATE FOOTER GRAND TOTALS
+        foreach ($final_state_per_product as $final) {
+            $total_closing_quantity += $final['qty'];
+            $total_closing_cost += $final['val'];
+        }
+    }
+
+    $data = array(
+        'from_date' => $from_date,
+        'to_date' => $to_date,
+        'sel_pid' => $pid,
+        'sel_wh' => $warehouse_id,
+        'report_data' => $report_data,
+        'products' => $this->product_core_model->get_records(),
+        'warehouses' => $this->warehouse_model->get_records(),
+        'title' => 'Stock Movement Summary',
+        'total_opening_quantity' => $total_opening_quantity,
+        'total_opening_cost' => $total_opening_cost,
+        'total_closing_quantity' => $total_closing_quantity,
+        'total_closing_cost' => $total_closing_cost
+    );
+    
+    $this->load->view('report/closing_stock', $data);
+}
 
 	public function inventory_product_added()
 {
@@ -940,11 +1136,18 @@ public function sale()
         $data['sales'] = $query->result();
         
         // Get active users for customer dropdown
-        $data['customers'] = $this->db->select('id, first_name, last_name, email, phone')
-            ->from('users')
-            ->where('active', 1)
-            ->get()
-            ->result();
+        // $data['customers'] = $this->db->select('id, first_name, last_name, email, phone')
+        //     ->from('users')
+        //     ->where('active', 1)
+        //     ->get()
+        //     ->result();
+        
+        $data['customers'] = $this->db->select('id, customer_name, customer_company_name')
+        ->from('customer')
+        ->where('delete_status', 0)
+        ->order_by('customer_name', 'ASC')
+        ->get()
+        ->result();
         
         $data['warehouse'] = $this->warehouse_model->get_records();
         

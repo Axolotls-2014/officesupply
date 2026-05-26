@@ -57,7 +57,7 @@
                   <?php foreach($payment_ins as $payment): ?>
                     <tr>
                       <td><?=$payment->reference_no?></td>
-                      <td><?=date('d-m-Y', strtotime($payment->payment_date))?></td>
+                      <td data-order="<?php echo date('Ymd', strtotime($payment->payment_date)); ?>"><?=date('d-m-Y', strtotime($payment->payment_date))?></td>
                       <td><?=$payment->customer_name?></td>
                       <td><?=$this->session->userdata('currency_symbol')?><?=number_format($payment->amount, 2)?></td>
                       <td>

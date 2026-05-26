@@ -512,7 +512,43 @@ footer {
                     <?php endforeach; ?>
                 
                     <!-- Freight Charges -->
-                    <?php if ($sale->additional_cost_type): ?>
+                    <!--<?php if ($sale->additional_cost_type): ?>-->
+                    <!--<tr class="item <?= $sale->additional_cost_type == 'internal' ? 'no-print' : '' ?>">-->
+                    <!--    <td><?= $i++; ?></td>-->
+                    <!--    <td>Freight Charges (<?= ucfirst($sale->additional_cost_type); ?>)</td>-->
+                    <!--    <td></td>-->
+                    <!--    <td></td>-->
+                    <!--    <td>Transport charges</td>-->
+                    <!--    <td></td>-->
+                    <!--    <td></td>-->
+                    <!--    <td>1.00</td>-->
+                    <!--    <td>₹ <?= number_format_i($row->freight_selling_price); ?></td>-->
+                    <!--    <td>₹ <?= number_format_i($row->freight_taxable_value); ?></td>-->
+                    <!--    <td>₹ <?= number_format_i($row->freight_tax_amount); ?> (<?= number_format_i($row->freight_tax_rate); ?>%)</td>-->
+                    <!--    <td>₹ <?= number_format_i($row->freight_sub_total); ?></td>-->
+                    <!--</tr>-->
+                    <!--<?php endif; ?>-->
+                    
+                   
+
+                    <!-- FINAL TOTAL ROW -->
+                    <!--<tr class="total" style="font-weight:bold; background-color:#f2f2f2;">-->
+                    <!--    <td colspan="7" style="text-align:right;">Total</td>-->
+                    <!--    <td><?= number_format_i($total_qty); ?></td>-->
+                    <!--    <td></td>-->
+                    <!--    <td>₹ <?= number_format_i($total_taxable_value); ?></td>-->
+                    <!--    <td>₹ <?= number_format_i($total_tax); ?></td>-->
+                    <!--    <td>₹ <?= number_format_i($total_subtotal); ?></td>-->
+                    <!--</tr>-->
+                    
+                    <!-- Freight Charges -->
+                    <?php if ($sale->additional_cost_type): 
+                        // ADD THIS LOGIC HERE to update the totals for the table summary
+                        $total_qty += 1; 
+                        $total_taxable_value += $sale->freight_taxable_value;
+                        $total_tax += $sale->freight_tax_amount;
+                        $total_subtotal += $sale->freight_sub_total;
+                    ?>
                     <tr class="item <?= $sale->additional_cost_type == 'internal' ? 'no-print' : '' ?>">
                         <td><?= $i++; ?></td>
                         <td>Freight Charges (<?= ucfirst($sale->additional_cost_type); ?>)</td>
@@ -522,14 +558,14 @@ footer {
                         <td></td>
                         <td></td>
                         <td>1.00</td>
-                        <td>₹ <?= number_format_i($row->freight_selling_price); ?></td>
-                        <td>₹ <?= number_format_i($row->freight_taxable_value); ?></td>
-                        <td>₹ <?= number_format_i($row->freight_tax_amount); ?> (<?= number_format_i($row->freight_tax_rate); ?>%)</td>
-                        <td>₹ <?= number_format_i($row->freight_sub_total); ?></td>
+                        <td>₹ <?= number_format_i($sale->freight_selling_price); ?></td>
+                        <td>₹ <?= number_format_i($sale->freight_taxable_value); ?></td>
+                        <td>₹ <?= number_format_i($sale->freight_tax_amount); ?> (<?= number_format_i($sale->freight_tax_rate); ?>%)</td>
+                        <td>₹ <?= number_format_i($sale->freight_sub_total); ?></td>
                     </tr>
                     <?php endif; ?>
-
-                    <!-- FINAL TOTAL ROW -->
+                    
+                    <!-- FINAL TOTAL ROW (Now uses the updated values above) -->
                     <tr class="total" style="font-weight:bold; background-color:#f2f2f2;">
                         <td colspan="7" style="text-align:right;">Total</td>
                         <td><?= number_format_i($total_qty); ?></td>
@@ -542,32 +578,43 @@ footer {
                 
                 <!-- Summary Section -->
                 <table>
-                    <?php
-                        if ($sale->additional_cost_type === 'external') {
-                            $total_taxable_value += $sale->freight_taxable_value;
-                            $total_tax += $sale->freight_tax_amount;
-                        }
-                    ?>
                     <tr class="heading">
                         <td colspan="6">Amount in Words</td>
                         <td colspan="3">Amounts</td>
                     </tr>
                     <tr class="details">
-                        <td colspan="6" style="text-align: center;">
+                        <td colspan="6" style="text-align: center; vertical-align: middle;">
                             <?= strtoupper($this->numbertowords->convert_number(round($sale->total))) . ' RUPEES ONLY'; ?>
                         </td>
                         <td colspan="3">
+                            <!-- Product Sub Total Only -->
                             <div><strong>Sub Total:</strong> <span style="float:right;">₹ <?= number_format_i($total_taxable_value); ?></span></div>
-                            <?php if ($total_tax): ?>
+                            
+                            <!-- Product Tax Only -->
+                            <?php if ($total_tax > 0): ?>
                                 <div><strong>Tax:</strong> <span style="float:right;">₹ <?= number_format_i($total_tax); ?></span></div>
                             <?php endif; ?>
+                
+                            <!-- Dedicated Freight Row (Shown separately, not added to Sub Total) -->
+                            <?php if ($sale->additional_cost_type): ?>
+                                <div><strong>Freight (<?= ucfirst($sale->additional_cost_type); ?>):</strong> 
+                                    <span style="float:right;">₹ <?= number_format_i($sale->freight_taxable_value); ?></span>
+                                </div>
+                                <!-- Show Freight Tax separately if it exists -->
+                                <?php if ($sale->freight_tax_amount > 0): ?>
+                                    <div><strong>Freight Tax:</strong> 
+                                        <span style="float:right;">₹ <?= number_format_i($sale->freight_tax_amount); ?></span>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                
                             <?php 
                             $rounded_off = round($sale->total) - $sale->total;
-                            if ($rounded_off): ?>
+                            if ($rounded_off != 0): ?>
                                 <div><strong>Rounded Off:</strong> <span style="float:right;">₹ <?= number_format_i($rounded_off); ?></span></div>
                             <?php endif; ?>
                             <hr>
-                            <div style="font-weight: bold;">Total: <span style="float:right;">₹ <?= number_format_i(round($sale->total)); ?></span></div>
+                            <div style="font-weight: bold; font-size: 16px;">Total: <span style="float:right;">₹ <?= number_format_i(round($sale->total)); ?></span></div>
                         </td>
                     </tr>
                 </table>

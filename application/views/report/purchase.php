@@ -4,6 +4,43 @@
 		.footer_data{
 			font-size: 20px;
 		}
+		  .purchase_list {
+        max-height: 700px; 
+        overflow: auto;
+        padding: 0 !important;
+    }
+
+    /* Freeze Title (Header) */
+    #purchase-data thead th {
+        position: sticky !important;
+        top: 0 !important;
+        background-color: #343a40 !important; /* Dark Header */
+        color: white !important;
+        z-index: 1000 !important;
+        white-space: nowrap;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+
+    /* Freeze Bottom (Totals) */
+    #purchase-data tfoot th {
+        position: sticky !important;
+        bottom: 0 !important;
+        background-color: #f39c12 !important; /* Yellow Totals */
+        color: white !important;
+        z-index: 1000 !important;
+        font-size: 18px;
+        box-shadow: inset 0 1px 0 #dee2e6;
+    }
+
+    /* Table Fixes */
+    #purchase-data {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100%;
+    }
+    
+    .text-right { text-align: right !important; }
+    .text-center { text-align: center !important; }
 	</style>
   	<div class="wrapper">
 	  	<div class="content-wrapper">
@@ -68,24 +105,6 @@
 				                  </div>
 				                </div>
 	                    </div>
-											<div class="col-sm-3">
-	                    	<div class="form-group">
-                          <label for="customer"><?=$this->lang->line('warehouse')?></label>
-                          <select class="form-control form-control-sm select2bs4" name="warehouse_id" id="warehouse_id" width="100%" class="add-row">
-                            <option value=""><?=$this->lang->line('select')?></option>
-                            <?php
-                              foreach ($warehouse as $value) {
-                            ?>
-                              <option value="<?=$value->id;?>" <?php echo set_select('id', $value->id); ?>>
-                                <?= $value->name;?>
-                              </option>
-                            <?php 
-                              }
-                            ?>
-                          </select>
-                          <span id="err_warehouse_id" class="error invalid-feedback"><?=form_error('warehouse_id');?></span>
-                        </div>
-	                    </div>
 	                    <div class="col-sm-3">
 	                    	<div class="form-group">
                           <label for="customer"><?=$this->lang->line('purchase_supplier')?></label>
@@ -104,6 +123,17 @@
                           <span id="err_supplier_id" class="error invalid-feedback"><?=form_error('supplier_id');?></span>
                         </div>
 	                    </div>
+	                    <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="form-control form-control-sm select2bs4" name="status" id="status_filter" width="100%">
+                                    <option value="">All Status</option>
+                                    <option value="Paid" <?php echo (isset($_POST['status']) && $_POST['status'] == 'Paid') ? 'selected' : ''; ?>>Paid</option>
+                                    <option value="Partial" <?php echo (isset($_POST['status']) && $_POST['status'] == 'Partial') ? 'selected' : ''; ?>>Partial</option>
+                                    <option value="Unpaid" <?php echo (isset($_POST['status']) && $_POST['status'] == 'Unpaid') ? 'selected' : ''; ?>>Unpaid</option>
+                                </select>
+                            </div>
+                        </div>
 	                  </div>
 		              </div>
 	              	<!-- /.card-body -->
@@ -134,96 +164,87 @@
                   </div>
 	              </div>
 	              <!-- /.card-header -->
-	              <div class="card-body purchase_list">
-	             		<table class="table table-bordered table-striped" id="purchase-data">
-		                <thead>
-                              <tr>
-                                <th width="2%">Sr.No</th>
-                                <th>Invoice Date</th>
-                                <th>Invoice No</th>
-                                <th>Branch</th>
-                                <th>Party Name</th>
-                                <th>Product Name</th>
-                                <th>Qty</th>
-                                <th>Rate</th>
-                                <th>Taxable Amount</th>
-                                <th>Tax</th>
-                                <th>Total Amount</th>
-                              </tr>
-                        </thead>
-		               <tbody>
-                                  <?php
-                                    $total_taxable_value 	= 0.0;
-                                    $total_tax_amt 			= 0.0;
-                                    $total_grand 			= 0.0;
-                                    $i = 1;
-                                
-                                    if(!empty($purchases))
-                                    {
-                                      foreach ($purchases as $value) 
-                                      {
-                                        // 1. Fetch tax data (This was missing and caused the blank screen)
-                                        $purchase_tax = $this->purchase_model->get_purchase_tax_individual($value->id);
-                                        
-                                        $item_tax = 0;
-                                        if($purchase_tax !== null) {
-                                            $item_tax = (float)$purchase_tax->igst_tax + (float)$purchase_tax->cgst_tax + (float)$purchase_tax->sgst_tax;
-                                        }
-                                
-                                        // 2. Identify variables from your specific query
-                                        // Some systems use 'total_taxable_value', others use 'taxable_value'
-                                        $row_taxable = isset($value->taxable_value) ? $value->taxable_value : $value->total_taxable_value;
-                                        $row_total   = isset($value->subtotal) ? $value->subtotal : $value->total;
-                                
-                                        // 3. Add to footer totals
-                                        $total_taxable_value += $row_taxable;
-                                        $total_tax_amt       += $item_tax;
-                                        $total_grand         += $row_total;
-                                  ?>
-                                  <tr>                        
-                                    <td><?= $i++; ?></td>
-                                    <td><?= date('d-m-Y', strtotime($value->purchase_date)); ?></td>
-                                    <td><?= $value->invoice_no; ?></td>
-                                    <td><?= $value->warehouse_name; ?></td>
-                                    <td><?= $value->company_name; ?></td>
-                                    <td><?= $value->product_name; ?></td>
-                                    <td><?= $value->quantity; ?></td>
-                                    <!--<td class="text-right"><?= number_format_i($value->cost); ?></td>-->
-                                    <td class="text-right">
-                                    <?php 
-                                        // Logic: Rate = Taxable Amount divided by Quantity
-                                        $row_taxable = isset($value->taxable_value) ? $value->taxable_value : $value->total_taxable_value;
-                                        $calculated_rate = ($value->quantity > 0) ? ($row_taxable / $value->quantity) : 0;
-                                        echo number_format_i($calculated_rate); 
-                                    ?>
-                                    </td>
-                                    <td class="text-right"><?= number_format_i($row_taxable); ?></td>
-                                    <td class="text-right"><?= number_format_i($item_tax); ?></td>
-                                    <td class="text-right"><?= number_format_i($row_total); ?></td>
-                                  </tr>
-                                  <?php  
-                                      }
-                                    }
-                                    else
-                                    {
-                                  ?>
-                                  <tr>
-                                    <td colspan="11" class="text-center">No Record Found</td>
-                                  </tr>
-                                  <?php
-                                    }
-                                  ?>
-                        </tbody>
-		                <tfoot class="footer_data">
-                              <tr>
-                                <th colspan="8" class="text-right">Total</th>
-                                <th class="text-right"><?= number_format_i($total_taxable_value) ?></th>
-                                <th class="text-right"><?= number_format_i($total_tax_amt) ?></th>
-                                <th class="text-right"><?= number_format_i($total_grand) ?></th>
-                              </tr>
-                            </tfoot>
-		              </table>
-	              </div>
+	              <div class="card-body purchase_list p-0">
+    <table class="table table-bordered table-striped m-0" id="purchase-data">
+        <thead>
+            <tr>
+                <th width="2%">Sr.No</th>
+                <th>Invoice Date</th>
+                <th>Invoice No</th>
+                <th>Supplier Name</th>
+                <th>GST No</th>
+                <th class="text-right">Taxable Amount</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
+                <th class="text-right">Total Amount</th>
+                <th class="text-center">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $t_taxable = 0; $t_cgst = 0; $t_sgst = 0; $t_igst = 0; $t_grand = 0;
+            $i = 1;
+
+            if (!empty($purchases)) {
+                foreach ($purchases as $value) {
+                    // Fetch individual tax components
+                    $purchase_tax = $this->purchase_model->get_purchase_tax_individual($value->id);
+                    $cgst = (float)($purchase_tax->cgst_tax ?? 0);
+                    $sgst = (float)($purchase_tax->sgst_tax ?? 0);
+                    $igst = (float)($purchase_tax->igst_tax ?? 0);
+
+                    $row_taxable = (float)($value->taxable_value ?? $value->total_taxable_value);
+                    $row_total   = (float)($value->subtotal ?? $value->total);
+
+                    // Totals for Footer
+                    $t_taxable += $row_taxable;
+                    $t_cgst    += $cgst;
+                    $t_sgst    += $sgst;
+                    $t_igst    += $igst;
+                    $t_grand   += $row_total;
+
+                    // Payment Status Logic (Paid / Partial / Unpaid)
+                    $paid = round($this->transaction_model->get_total_transaction_amount($value->id, 'P', 'R'), 2);
+                    $total = round($row_total, 2);
+                    
+                    if($paid >= $total) $status = '<span class="badge badge-success">Paid</span>';
+                    elseif($paid > 0) $status = '<span class="badge badge-warning">Partial</span>';
+                    else $status = '<span class="badge badge-danger">Unpaid</span>';
+            ?>
+                <tr>
+                    <td><?= $i++; ?></td>
+                    <td><?= date('d-m-Y', strtotime($value->purchase_date)); ?></td>
+                    <td><?= $value->invoice_no; ?></td>
+                    <td><?= $value->company_name; ?></td>
+                    <td><?= !empty($value->gst_no) ? $value->gst_no : 'N/A'; ?></td>
+                    <td class="text-right"><?= number_format($row_taxable, 2); ?></td>
+                    <td class="text-right"><?= number_format($cgst, 2); ?></td>
+                    <td class="text-right"><?= number_format($sgst, 2); ?></td>
+                    <td class="text-right"><?= number_format($igst, 2); ?></td>
+                    <td class="text-right"><strong><?= number_format($row_total, 2); ?></strong></td>
+                    <td class="text-center"><?= $status ?></td>
+                </tr>
+            <?php
+                }
+            } else {
+                echo '<tr><td colspan="11" class="text-center">No Record Found</td></tr>';
+            }
+            ?>
+        </tbody>
+        <tfoot class="footer_data">
+            <tr>
+                <th colspan="5" class="text-right">Total:</th>
+                <th class="text-right"><?= number_format($t_taxable, 2) ?></th>
+                <th class="text-right"><?= number_format($t_cgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_sgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_igst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_grand, 2) ?></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 	            </div>
 	            <!-- /.card -->
 	          </div>

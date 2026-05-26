@@ -64,7 +64,7 @@ public function add()
             // print_r($this->input->post());
             // echo "</pre>";
             // die;
-            
+            $this->form_validation->set_rules('reference_no', 'Quotation Number', 'required');
             $this->form_validation->set_rules('quotation_date','Quotation Date','required');		
             $this->form_validation->set_rules('customer_id','Customer','required');
             $this->form_validation->set_rules('warehouse_id','Warehouse','required');
@@ -101,7 +101,8 @@ public function add()
 
                 $quotation_date 			= date('Y-m-d', strtotime($this->input->post('quotation_date')));
                 $valid_days = $this->input->post('valid_days');
-                $reference_no 				= $this->quotation_model->get_lastest_sequence_number();
+                // $reference_no 				= $this->quotation_model->get_lastest_sequence_number();
+                $reference_no = $this->input->post('reference_no'); 
                 $customer_id 				= $this->input->post('customer_id');
                 
                 $selected_shipping_address_id = $this->input->post('shipping_address_select');
@@ -222,6 +223,8 @@ public function add()
             $data['suppliers'] = $this->supplier_model->get_records();
             $data['company_setting'] = $this->company_settings_model->get_company_records();	
             $data['warehouses'] = $this->warehouse_model->get_records();
+            $data['reference_no'] = $this->quotation_model->get_lastest_sequence_number(); 
+
             $this->load->view('quotation/add',$data);
         }
     }

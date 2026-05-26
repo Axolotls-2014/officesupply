@@ -1466,6 +1466,8 @@
       // Service search code begin
 
       var c_mapping = { };
+      var dc_product_mapping  = {}; // Mapping object to store ID by display text
+
 
 $(function(){
     $('#search_product').autoComplete({
@@ -1488,10 +1490,21 @@ $(function(){
                     var products = data;
                     
                     var suggestions = [];
+                    dc_product_mapping = {};
                     
-                    for(var i = 0; i < products.length; ++i) {
-                        suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
-                        c_mapping[products[i].warehouse_products_id] = products[i].name;
+                    // for(var i = 0; i < products.length; ++i) {
+                    //     suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
+                    //     c_mapping[products[i].warehouse_products_id] = products[i].name;
+                    // }
+                    
+                     for(var i = 0; i < products.length; ++i) {
+                        // Create clean display string without the ID
+                        var display_text = products[i].name + ' - ' + products[i].product_category_name + ' - ' + products[i].price;
+                        
+                        suggestions.push(display_text);
+                        
+                        // Map the text string to the actual ID
+                        dc_product_mapping[display_text] = products[i].warehouse_products_id;
                     }
 
                     if(suggestions.length == 0)
@@ -1510,7 +1523,8 @@ $(function(){
         onSelect: function(event, ui) {
             var str = ui.split(' - ');
             
-            var warehouse_products_id = str[0];
+            // var warehouse_products_id = str[0];
+            var warehouse_products_id = dc_product_mapping[ui];
 
             $.ajax({
                 url: "<?php echo base_url('product/get_record_detail') ?>",

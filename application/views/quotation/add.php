@@ -219,6 +219,13 @@
                                         <!--</div>-->
                                         <div class="col-sm-3">
                                             <div class="form-group">
+                                                <label>Quotation No <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="reference_no" name="reference_no" value="<?= $reference_no; ?>" required>
+                                                <span id="err_reference_no" class="error invalid-feedback"><?= form_error('reference_no'); ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <div class="form-group">
                                                 <label><?=$this->lang->line('quotation_date')?></label>
                                                 <input type="text" class="form-control datepicker" id="quotation_date"
                                                     name="quotation_date" value="<?=date('d-m-Y');?>">
@@ -305,10 +312,10 @@
 
                                                         <?php foreach ($customers as $value): ?>
                                                         <?php
-                    $displayText = $value->customer_name;
-                    if (!empty($value->customer_company_name)) {
-                        $displayText .= ' (' . $value->customer_company_name . ')';
-                    }
+                    $displayText = $value->customer_company_name;
+                    // if (!empty($value->customer_company_name)) {
+                    //     $displayText .= ' (' . $value->customer_company_name . ')';
+                    // }
                     ?>
                                                         <option value="<?= $value->id; ?>"
                                                             <?= set_select('customer_id', $value->id); ?>>
@@ -350,10 +357,7 @@
                 
                     <?php foreach ($customers as $value): ?>
                         <option value="<?= $value->id; ?>" <?= set_select('customer_id', $value->id); ?>>
-                            <?= $value->customer_name; ?>
-                            <?php if (!empty($value->customer_company_name)): ?>
-                                (<?= $value->customer_company_name; ?>)
-                            <?php endif; ?>
+                            <?= $value->customer_company_name; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -387,10 +391,10 @@
                 <?php foreach ($customers as $value): ?>
                     <option value="<?= $value->id; ?>" <?= set_select('customer_id', $value->id); ?>>
                         <?php 
-                        $displayText = $value->customer_name;
-                        if (!empty($value->customer_company_name)) {
-                            $displayText .= ' (' . $value->customer_company_name . ')';
-                        }
+                        $displayText = $value->customer_company_name;
+                        // if (!empty($value->customer_company_name)) {
+                        //     $displayText .= ' (' . $value->customer_company_name . ')';
+                        // }
                         echo htmlspecialchars($displayText);
                         ?>
                     </option>
@@ -1241,6 +1245,7 @@ $(document).ready(function(e) {
 
 
     var c_mapping = {};
+    var product_display_to_id = {}; // Mapping object to store ID by display text
 
     $(function() {
         $('#search_product').autoComplete({
@@ -1263,13 +1268,16 @@ $(document).ready(function(e) {
                     success: function(data) {
                         var products = data;
                         var suggestions = [];
+                        product_display_to_id = {}; // Reset map on every search
+                        
                         for (var i = 0; i < products.length; ++i) {
-                            suggestions.push(products[i].warehouse_products_id +
-                                ' - ' + products[i].name + ' - ' + products[
-                                    i].product_category_name + ' - ' +
-                                products[i].selling_price);
-                            c_mapping[products[i].warehouse_products_id] =
-                                products[i].name;
+                            // Create a clean display text without the ID at the start
+                            var display_text = products[i].name + ' - ' + products[i].product_category_name + ' - ' + products[i].selling_price;
+                            
+                            suggestions.push(display_text);
+
+                            // Map this specific string to the warehouse_products_id
+                            product_display_to_id[display_text] = products[i].warehouse_products_id;
                         }
                         suggest(suggestions);
                     }
@@ -1277,7 +1285,9 @@ $(document).ready(function(e) {
             },
             onSelect: function(event, ui) {
                 var str = ui.split(' - ');
-                var warehouse_products_id = str[0];
+                // var warehouse_products_id = str[0];
+                var warehouse_products_id = product_display_to_id[ui];
+
 
                 $.ajax({
                     url: "<?php echo base_url('product/get_record_detail') ?>",

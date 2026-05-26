@@ -1229,7 +1229,7 @@ private function delete_payment_record() {
 //     ]);
 // }
 
-public function get_supplier_due_amount() {
+public function get_supplier_due_amount1705() {
     $supplier_id = $this->input->post('supplier_id');
     
     // Set JSON header
@@ -1268,6 +1268,33 @@ public function get_supplier_due_amount() {
         'total_payments' => $total_payments,
         'status' => 'success',
         'message' => 'Showing due for delivered items only'
+    ]);
+}
+
+public function get_supplier_due_amount() {
+    $supplier_id = $this->input->post('supplier_id');
+    $this->output->set_content_type('application/json');
+    
+    if(empty($supplier_id)) {
+        echo json_encode(['due_amount' => 0]);
+        return;
+    }
+    
+    $invoices = $this->payment_out_model->get_supplier_unpaid_invoices($supplier_id);
+    
+    $total_due = 0;
+    $math_logs = [];
+
+    foreach ($invoices as $invoice) {
+        $total_due += (float)$invoice->due_amount;
+        if(isset($invoice->debug)) {
+            $math_logs[] = $invoice->debug;
+        }
+    }
+    
+    echo json_encode([
+        'status' => 'success',
+        'due_amount' => $total_due,
     ]);
 }
 

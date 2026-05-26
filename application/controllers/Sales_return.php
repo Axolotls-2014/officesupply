@@ -56,8 +56,9 @@ class Sales_return extends MY_Controller {
 					$data['warehouses'] 			= $this->warehouse_model->get_records();
 					$data['customer'] 				= $this->customer_model->get_records();
 					$data['company_setting']	= $this->company_settings_model->get_company_records();	
-					$data['sales'] 						= $this->sale_model->get_sale_records();
-					
+				// 	$data['sales'] 						= $this->sale_model->get_sale_records();
+		        	$data['sales'] = $this->sale_model->get_delivered_sale_records();
+                    $data['reference_no']    = $this->sales_return_model->get_lastest_sequence_number();
 					$this->load->view('sales_return/add',$data);
 				}
 				else
@@ -70,7 +71,13 @@ class Sales_return extends MY_Controller {
 					$customer 						= $this->customer_model->get_single_record($customer_id);
 					$customer_gstin 			= $customer->gstin;
 
-					$invoice_no 					= $this->input->post('sale_id');
+				// 	$invoice_no 					= $this->input->post('sale_id');
+			    	// $invoice_no = $this->input->post('invoice_no');
+			    	$invoice_no= $this->input->post('invoice_no'); 
+
+                    // 3. Get the hidden Sale ID (e.g., "239")
+                    $sale_id = $this->input->post('sale_id');
+
 					$total_taxable_value 	= $this->input->post('total_taxable_value');
 					$total_discount 			= $this->input->post('total_discount');
 					$total_tax 						= $this->input->post('total_tax');
@@ -92,7 +99,7 @@ class Sales_return extends MY_Controller {
           $documents = implode(',', $document);
 
 					$sales_return_data = array(
-                                // "sale_id"				      => $sale_id,
+                                                                 "sale_id"				      => $sale_id,
 																"sales_return_date"		=> $sales_return_date,
 																"reference_no"				=> $reference_no,
 																"invoice_no"					=> $invoice_no,
@@ -228,7 +235,10 @@ class Sales_return extends MY_Controller {
 				$data['warehouses'] 			= $this->warehouse_model->get_records();
 				$data['customer'] 				= $this->customer_model->get_records();
 				$data['company_setting']	= $this->company_settings_model->get_company_records();	
-				$data['sales'] 						= $this->sale_model->get_sale_records();
+				// $data['sales'] 						= $this->sale_model->get_sale_records();
+				$data['sales'] = $this->sale_model->get_delivered_sale_records();
+                $data['reference_no']    = $this->sales_return_model->get_lastest_sequence_number();
+
 				$this->load->view('sales_return/add',$data);
 			}
 		}	
@@ -1339,18 +1349,42 @@ class Sales_return extends MY_Controller {
 	/************************************** End Dynamic Datatable function ***************************************/
 
 
-	public function get_sale_items_by_sale_id()
-	{
-		$sale_id 														= $this->input->post('sale_id');
-		$data['sale']												= $this->sale_model->get_sale_single_record($sale_id);
+// 	public function get_sale_items_by_sale_id()
+// 	{
+// 		$sale_id 														= $this->input->post('sale_id');
+// 		$data['sale']												= $this->sale_model->get_sale_single_record($sale_id);
 		
-		$data['sale_items']									= $this->sale_model->get_sale_item_records($sale_id);
+// 		$data['sale_items']									= $this->sale_model->get_sale_item_records($sale_id);
 
-  	$response 													= array();
-  	$response['view_sale_items'] 	 			= $this->load->view('sales_return/ajax/view_sale_items',$data,TRUE);
+//   	$response 													= array();
+//   	$response['view_sale_items'] 	 			= $this->load->view('sales_return/ajax/view_sale_items',$data,TRUE);
 
-  	echo json_encode($response);
-	}
+//   	echo json_encode($response);
+// 	}
+
+    public function get_sale_items_by_sale_id()
+    {
+        $sale_id = $this->input->post('sale_id');
+        $sale    = $this->sale_model->get_sale_single_record($sale_id);
+        $items   = $this->sale_model->get_sale_item_records($sale_id);
+    
+        // Loop through items to find how many were previously returned
+        foreach ($items as $item) {
+            // We use the original sale's reference_no to track returns
+            $item->previously_returned = $this->sales_return_model->get_already_returned_qty($sale->reference_no, $item->product_id);
+            
+            // Calculate what is actually left to return
+            $item->available_to_return = $item->quantity - $item->previously_returned;
+        }
+    
+        $data['sale']       = $sale;
+        $data['sale_items'] = $items;
+    
+        $response = array();
+        $response['view_sale_items'] = $this->load->view('sales_return/ajax/view_sale_items', $data, TRUE);
+    
+        echo json_encode($response);
+    }
 
 	public function upload_documents() 
 	{

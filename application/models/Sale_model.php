@@ -133,6 +133,183 @@ public function get_sale_records($limit = null)
     }
 }
 
+    public function get_delivered_sale_records()
+    {
+         $user_id = $this->session->userdata('user_id');
+    
+        $branch_data = $this->db->select('branch_id')
+                                ->from('users')
+                                ->where('id', $user_id)
+                                ->get()
+                                ->row();
+    
+        if ($branch_data && $branch_data->branch_id) {
+    
+            $warehouse_ids = $this->db->select('id')
+                                      ->from('warehouse')
+                                      ->where('id', $branch_data->branch_id)
+                                      ->get()
+                                      ->result_array();
+    
+            $warehouse_ids = array_column($warehouse_ids, 'id');
+    
+        } else {
+            $warehouse_ids = [];
+        }
+    
+        if ($this->permission_model->has_permission('list_all_sale')) {
+    
+            $this->db->select('
+                s.*,
+                c.customer_name,
+                c.gstin,
+                c.state_name,
+                c.customer_company_name,
+                w.name as warehouse_name,
+                si.product_id,
+                si.quantity,
+                si.selling_price,
+                p.name,
+                p.description,
+                p.product_category_id,
+                p.hsn,
+                p.uom_id
+            ')
+            ->from('sale s')
+            ->join('customer c', 'c.id = s.customer_id', 'left')
+            ->join('warehouse w', 'w.id = s.warehouse_id', 'left')
+            ->join('sale_items si', 'si.sale_id = s.id', 'left')
+            ->join('product p', 'p.id = si.product_id', 'left')
+    
+            // DELIVERY FILTER ADDED
+            ->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner')
+    
+            ->where('s.delete_status', 0);
+    
+            if (!empty($warehouse_ids)) {
+                $this->db->where_in('s.warehouse_id', $warehouse_ids);
+            }
+    
+            // PREVENT DUPLICATES
+            $this->db->group_by('s.id');
+    
+            $this->db->order_by('s.created_date', 'desc');
+    
+            if ($limit != null) {
+                $this->db->limit($limit);
+            }
+    
+            return $this->db->get()->result();
+    
+        } else {
+    
+            $user_id = csession('user_id');
+    
+            if ($is_customer) {
+    
+                $customer = $this->utility_model->get_records_by_field(
+                    'customer',
+                    'user_id',
+                    $user_id,
+                    true,
+                    false
+                );
+    
+                $customer_id = $customer->id;
+    
+                $this->db->select('
+                    s.*,
+                    c.customer_name,
+                    c.gstin,
+                    c.state_name,
+                    c.customer_company_name,
+                    w.name as warehouse_name,
+                    si.product_id,
+                    si.quantity,
+                    si.selling_price,
+                    p.name,
+                    p.description,
+                    p.product_category_id,
+                    p.hsn,
+                    p.uom_id
+                ')
+                ->from('sale s')
+                ->join('customer c', 'c.id = s.customer_id', 'left')
+                ->join('warehouse w', 'w.id = s.warehouse_id', 'left')
+                ->join('sale_items si', 'si.sale_id = s.id', 'left')
+                ->join('product p', 'p.id = si.product_id', 'left')
+    
+                // DELIVERY FILTER ADDED
+                ->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner')
+    
+                ->where('s.delete_status', 0)
+                ->group_start()
+                    ->where('s.customer_id', $customer_id)
+                    ->or_where('s.user_id', $user_id)
+                ->group_end();
+    
+                if (!empty($warehouse_ids)) {
+                    $this->db->where_in('s.warehouse_id', $warehouse_ids);
+                }
+    
+                // PREVENT DUPLICATES
+                $this->db->group_by('s.id');
+    
+                $this->db->order_by('s.created_date', 'desc');
+    
+                if ($limit != null) {
+                    $this->db->limit($limit);
+                }
+    
+                return $this->db->get()->result();
+    
+            } else {
+    
+                $this->db->select('
+                    s.*,
+                    c.customer_name,
+                    c.gstin,
+                    c.state_name,
+                    c.customer_company_name,
+                    w.name as warehouse_name,
+                    si.product_id,
+                    si.quantity,
+                    si.selling_price,
+                    p.name,
+                    p.description,
+                    p.product_category_id,
+                    p.hsn,
+                    p.uom_id
+                ')
+                ->from('sale s')
+                ->join('customer c', 'c.id = s.customer_id', 'left')
+                ->join('warehouse w', 'w.id = s.warehouse_id', 'left')
+                ->join('sale_items si', 'si.sale_id = s.id', 'left')
+                ->join('product p', 'p.id = si.product_id', 'left')
+    
+                // DELIVERY FILTER ADDED
+                ->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner')
+    
+                ->where('s.delete_status', 0)
+                ->where('s.user_id', $user_id);
+    
+                if (!empty($warehouse_ids)) {
+                    $this->db->where_in('s.warehouse_id', $warehouse_ids);
+                }
+    
+                // PREVENT DUPLICATES
+                $this->db->group_by('s.id');
+    
+                $this->db->order_by('s.created_date', 'desc');
+    
+                if ($limit != null) {
+                    $this->db->limit($limit);
+                }
+    
+                return $this->db->get()->result();
+            }
+        }
+    }
 
     public function get_sale_single_record_by_quotation_id($quotation_id)
     {

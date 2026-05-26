@@ -4,6 +4,40 @@
 		.footer_data{
 			font-size: 20px;
 		}
+		  .purchase_return_list {
+        max-height: 700px;
+        overflow: auto;
+        padding: 0 !important;
+    }
+
+    /* Freeze Header (Title) */
+    #purchase-return-data thead th {
+        position: sticky !important;
+        top: 0 !important;
+        background-color: #343a40 !important; /* Dark Header */
+        color: white !important;
+        z-index: 1000 !important;
+        white-space: nowrap;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+
+    /* Freeze Footer (Bottom) */
+    #purchase-return-data tfoot th {
+        position: sticky !important;
+        bottom: 0 !important;
+        background-color: #f39c12 !important; /* Yellow Footer */
+        color: white !important;
+        z-index: 1000 !important;
+        font-size: 18px;
+        box-shadow: inset 0 1px 0 #dee2e6;
+    }
+
+    /* Table Fixes */
+    #purchase-return-data {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100%;
+    }
 	</style>
   	<div class="wrapper">
 	  	<div class="content-wrapper">
@@ -67,25 +101,7 @@
 				                  </div>
 				                </div>
 	                    </div>
-											<div class="col-sm-3">
-	                    	<div class="form-group">
-                          <label for="customer"><?=$this->lang->line('warehouse')?></label>
-                          <select class="form-control form-control-sm select2bs4" name="warehouse_id" id="warehouse_id" width="100%" class="add-row">
-                            <option value=""><?=$this->lang->line('select')?></option>
-                            <?php
-                              foreach ($warehouse as $value) {
-                            ?>
-                              <option value="<?=$value->id;?>" <?php echo set_select('id', $value->id); ?>>
-                                <?= $value->name;?>
-                              </option>
-                            <?php 
-                              }
-                            ?>
-                          </select>
-                          <span id="err_warehouse_id" class="error invalid-feedback"><?=form_error('warehouse_id');?></span>
-                        </div>
-	                    </div>
-	                    <div class="col-sm-3">
+	                    <div class="col-sm-2">
 	                    	<div class="form-group">
                           <label for="customer"><?=$this->lang->line('purchase_return_supplier')?></label>
                           <select class="form-control form-control-sm select2bs4" name="supplier_id" id="supplier_id" width="100%" class="add-row">
@@ -103,6 +119,29 @@
                           <span id="err_supplier_id" class="error invalid-feedback"><?=form_error('supplier_id');?></span>
                         </div>
 	                    </div>
+	                    <!-- Filter: Type -->
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select class="form-control form-control-sm select2bs4" name="type" id="type_filter">
+                                    <option value="">All Types</option>
+                                    <option value="Debit Note" <?= (isset($_POST['type']) && $_POST['type'] == 'Debit Note') ? 'selected' : '' ?>>Debit Note</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter: Status -->
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="form-control form-control-sm select2bs4" name="status" id="status_filter">
+                                    <option value="">All Status</option>
+                                    <option value="Paid" <?= (isset($_POST['status']) && $_POST['status'] == 'Paid') ? 'selected' : '' ?>>Paid</option>
+                                    <option value="Partial" <?= (isset($_POST['status']) && $_POST['status'] == 'Partial') ? 'selected' : '' ?>>Partial</option>
+                                    <option value="Unpaid" <?= (isset($_POST['status']) && $_POST['status'] == 'Unpaid') ? 'selected' : '' ?>>Unpaid</option>
+                                </select>
+                            </div>
+                        </div>
 	                  </div>
 		              </div>
 	              	<!-- /.card-body -->
@@ -132,58 +171,77 @@
                   </div>
 	              </div>
 	              <!-- /.card-header -->
-	              <div class="card-body purchase_return_list">
-	             		 <table class="table table-bordered table-striped" id="purchase-return-data">
-    <thead>
-        <tr>
-            <th width="2%">Sr.No</th>
-            <th>Type</th>
-            <th>Date</th>
-            <th>Invoice No</th>
-            <th>Party Name</th>
-            <th>Product Name</th>
-            <th class="text-right">Qty</th>
-            <th class="text-right">Rate</th>
-            <th class="text-right">Amount</th>
-            <th>Remarks</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php 
-        $i = 1; $total_amt = 0;
-        if(!empty($purchase_return)): 
-            foreach($purchase_return as $row): 
-                $total_amt += (float)$row->amount;
-        ?>
-        <tr>
-            <td><?= $i++; ?></td>
-            <td><span class="badge badge-danger">Debit Note</span></td>
-            <td><?= (!empty($row->date)) ? date('d-m-Y', strtotime($row->date)) : 'N/A' ?></td>
-            <td>
-                <a href="<?=base_url('purchase_return/view/'.base64_encode($row->return_id))?>" target="_blank">
-                    <?= $row->invoice_no ?>
-                </a>
-            </td>
-            <td><?= $row->party_name ?></td>
-            <td><?= $row->product_name ?></td>
-            <td class="text-right"><?= number_format($row->qty, 2) ?></td>
-            <td class="text-right"><?= number_format($row->rate, 2) ?></td>
-            <td class="text-right"><?= number_format($row->amount, 2) ?></td>
-            <td><?= $row->remarks ?></td>
-        </tr>
-        <?php endforeach; else: ?>
-            <tr><td colspan="10" class="text-center">No Records Found</td></tr>
-        <?php endif; ?>
-    </tbody>
-    <tfoot class="footer_data">
-        <tr>
-            <th colspan="8" class="text-right">Total:</th>
-            <th class="text-right"><?= number_format($total_amt, 2) ?></th>
-            <th></th>
-        </tr>
-    </tfoot>
-</table>
-	              </div>
+	              <div class="card-body purchase_return_list p-0">
+    <table class="table table-bordered table-striped m-0" id="purchase-return-data">
+        <thead>
+            <tr>
+                <th width="2%">Sr.No</th>
+                <th>Return Date</th>
+                <th>Voucher No</th>
+                <th>Supplier Name</th>
+                <th>GST No</th>
+                <th class="text-right">Taxable Amount</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
+                <th class="text-right">Total Amount</th>
+                <th class="text-center">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+            $i = 1; 
+            $t_taxable = 0; $t_cgst = 0; $t_sgst = 0; $t_igst = 0; $t_grand = 0;
+            
+            if(!empty($purchase_return)): 
+                foreach($purchase_return as $row): 
+                    // Fetch tax components for this return
+                    $tax_data = $this->purchase_return_model->get_purchase_return_tax_individual($row->return_id);
+                    $cgst = (float)($tax_data->cgst_tax ?? 0);
+                    $sgst = (float)($tax_data->sgst_tax ?? 0);
+                    $igst = (float)($tax_data->igst_tax ?? 0);
+                    $taxable = (float)($row->taxable_amount ?? ($row->amount - ($cgst + $sgst + $igst)));
+
+                    $t_taxable += $taxable;
+                    $t_cgst    += $cgst;
+                    $t_sgst    += $sgst;
+                    $t_igst    += $igst;
+                    $t_grand   += (float)$row->amount;
+            ?>
+            <tr>
+                <td><?= $i++; ?></td>
+                <td><?= date('d-m-Y', strtotime($row->date)) ?></td>
+                <td>
+                    <a href="<?=base_url('purchase_return/view/'.base64_encode($row->return_id))?>" target="_blank">
+                        <?= $row->invoice_no ?>
+                    </a>
+                </td>
+                <td><?= $row->party_name ?></td>
+                <td><?= !empty($row->gst_no) ? $row->gst_no : 'N/A' ?></td>
+                <td class="text-right"><?= number_format($taxable, 2) ?></td>
+                <td class="text-right"><?= number_format($cgst, 2) ?></td>
+                <td class="text-right"><?= number_format($sgst, 2) ?></td>
+                <td class="text-right"><?= number_format($igst, 2) ?></td>
+                <td class="text-right"><strong><?= number_format($row->amount, 2) ?></strong></td>
+                <td class="text-center"><span class="badge badge-danger">Debit Note</span></td>
+            </tr>
+            <?php endforeach; else: ?>
+                <tr><td colspan="11" class="text-center">No Records Found</td></tr>
+            <?php endif; ?>
+        </tbody>
+        <tfoot class="footer_data">
+            <tr>
+                <th colspan="5" class="text-right">Total:</th>
+                <th class="text-right"><?= number_format($t_taxable, 2) ?></th>
+                <th class="text-right"><?= number_format($t_cgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_sgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_igst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_grand, 2) ?></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 	            </div>
 	            <!-- /.card -->
 	          </div>

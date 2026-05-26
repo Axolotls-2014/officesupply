@@ -4,6 +4,38 @@
 		.footer_data{
 			font-size: 20px;
 		}
+		/* Container to enable internal scrolling */
+.sales_list {
+    max-height: 700px; /* Adjust height as needed */
+    overflow-y: auto;
+    padding: 0 !important;
+}
+
+/* Freeze Header */
+#sale-data thead th {
+    position: sticky;
+    top: 0;
+    background-color: #343a40 !important; /* Dark theme header */
+    color: white;
+    z-index: 10;
+    box-shadow: inset 0 -1px 0 #dee2e6; /* Keeps border visible */
+}
+
+/* Freeze Footer */
+#sale-data tfoot th {
+    position: sticky;
+    bottom: 0;
+    background-color: #f39c12 !important; /* Sticky yellow footer */
+    color: white;
+    z-index: 10;
+    box-shadow: inset 0 1px 0 #dee2e6; /* Keeps border visible */
+}
+
+/* Technical fix: ensures sticky borders don't disappear */
+#sale-data {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
 	</style>
   	<div class="wrapper">
 	  	<div class="content-wrapper">
@@ -81,7 +113,7 @@
 				                  </div>
 				                </div>
 	                    </div>
-											<div class="col-sm-3">
+											<div class="col-sm-3" style = "display : none">
 	                    	<div class="form-group">
                           <label for="customer"><?=$this->lang->line('warehouse')?></label>
                           <select class="form-control form-control-sm select2bs4 add-row" name="warehouse_id" id="warehouse_id" width="100%">
@@ -109,7 +141,9 @@
                                 $customer_label = trim(($value->first_name ?? '') . ' ' . ($value->last_name ?? '')) ?: ($value->email ?? '');
                             ?>
                               <option value="<?=$value->id;?>" <?php echo set_select('customer_id', $value->id); ?>>
-                                <?= $customer_label; ?>
+                                <!--<?= $customer_label; ?>-->
+                                  <!--<?php  echo !empty($value->customer_name) ? $value->customer_name: $value->customer_company_name ; ?>-->
+                                      <?= $value->customer_company_name; ?>
                               </option>
                             <?php 
                               }
@@ -148,83 +182,74 @@
                   </div>
 	              </div>
 	              <!-- /.card-header -->
-	             <div class="card-body sales_list">
-     <table class="table table-bordered table-striped" id="sale-data">
+<div class="card-body sales_list p-0">
+    <table class="table table-bordered table-striped m-0" id="sale-data">
         <thead>
             <tr>
                 <th width="2%">Sr.No</th>
                 <th>Invoice Date</th>
                 <th>Invoice No</th>
-                <th>Branch</th>
-                <th>Party Name</th>
-                <th>Product Name</th>
-                <th>Qty</th>
-                <th>Rate</th>
+                <th>Customer Name</th>
+                <th>GST No</th>
                 <th>Taxable Amount</th>
-                <th>Tax</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>IGST</th>
                 <th>Total Amount</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
             <?php 
-            $total_taxable = 0;
-            $total_tax = 0;
-            $total_grand = 0;
+            $t_taxable = 0; $t_cgst = 0; $t_sgst = 0; $t_igst = 0; $t_grand = 0;
             $i = 1;
 
-            if(!empty($sales) && count($sales) > 0): 
+            if(!empty($sales)): 
                 foreach($sales as $sale): 
-                    // Calculate individual tax for this row
-                    // $item_tax = (float)$sale->igst_tax + (float)$sale->cgst_tax + (float)$sale->sgst_tax;
-                    
-                    // // Identify row values (Handling possible different naming in queries)
-                    // $row_taxable = isset($sale->taxable_value) ? $sale->taxable_value : ($sale->total_taxable_value / count($sales)); 
-                    // $row_total = isset($sale->sub_total) ? $sale->sub_total : $sale->total;
-                     $item_tax = (float)$sale->igst_tax + (float)$sale->cgst_tax + (float)$sale->sgst_tax;
-        
-        // 2. Identify Taxable Value
-                    $row_taxable = (float)$sale->taxable_value;
-                    
-                    // 3. FIX: Calculate Total Amount manually (Taxable + Tax)
-                    // This ensures it never shows 0 if the other two columns have values
-                    $row_total = $row_taxable + $item_tax;
-                    // Logic: Rate = Taxable Amount / Quantity
-                    $rate = ($sale->quantity > 0) ? ($row_taxable / $sale->quantity) : 0;
+                    $t_taxable += (float)$sale->total_taxable_value;
+                    $t_cgst    += (float)$sale->total_cgst;
+                    $t_sgst    += (float)$sale->total_sgst;
+                    $t_igst    += (float)$sale->total_igst;
+                    $t_grand   += (float)$sale->total_amount;
 
-                    $total_taxable += $row_taxable;
-                    $total_tax     += $item_tax;
-                    $total_grand   += $row_total;
+                    // Payment Status Logic
+                    $paid = round($this->transaction_model->get_total_transaction_amount($sale->sale_id, 'S', 'R'), 2);
+                    $total = round($sale->total_amount, 2);
+                    
+                    if($paid >= $total) $status = '<span class="badge badge-success">Paid</span>';
+                    elseif($paid > 0) $status = '<span class="badge badge-warning">Partial</span>';
+                    else $status = '<span class="badge badge-danger">Unpaid</span>';
             ?>
                 <tr>
                     <td><?= $i++; ?></td>
-                    <td><?= !empty($sale->invoice_date) ? date('d-m-Y', strtotime($sale->invoice_date)) : 'N/A' ?></td>
+                    <td><?= date('d-m-Y', strtotime($sale->invoice_date)) ?></td>
                     <td>
-                        <?php if(!empty($sale->invoice_no) && !empty($sale->sale_id)): ?>
-                            <a href="<?= base_url('sale/pdf_request/' . base64_encode($sale->sale_id)) ?>" target="_blank"><?= $sale->invoice_no ?></a>
-                        <?php else: ?>
+                        <a href="<?= base_url('sale/view/' . base64_encode($sale->sale_id)) ?>" target="_blank">
                             <?= $sale->invoice_no ?>
-                        <?php endif; ?>
+                        </a>
                     </td>
-                    <td><?= $sale->warehouse_name ?></td>
                     <td><?= !empty($sale->customer_company_name) ? $sale->customer_company_name : $sale->customer_name ?></td>
-                    <td><?= $sale->product_name ?></td>
-                    <td><?= number_format($sale->quantity, 2) ?></td>
-                    <td class="text-right"><?= number_format($rate, 2) ?></td>
-                    <td class="text-right"><?= number_format($row_taxable, 2) ?></td>
-                    <td class="text-right"><?= number_format($item_tax, 2) ?></td>
-                    <td class="text-right"><?= number_format($row_total, 2) ?></td>
+                    <td><?= !empty($sale->gst_no) ? $sale->gst_no : 'N/A' ?></td>
+                    <td class="text-right"><?= number_format($sale->total_taxable_value, 2) ?></td>
+                    <td class="text-right"><?= number_format($sale->total_cgst, 2) ?></td>
+                    <td class="text-right"><?= number_format($sale->total_sgst, 2) ?></td>
+                    <td class="text-right"><?= number_format($sale->total_igst, 2) ?></td>
+                    <td class="text-right"><strong><?= number_format($sale->total_amount, 2) ?></strong></td>
+                    <td class="text-center"><?= $status ?></td>
                 </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr><td colspan="11" class="text-center">No sales records found</td></tr>
+            <?php endforeach; else: ?>
+                <tr><td colspan="11" class="text-center">No records found</td></tr>
             <?php endif; ?>
         </tbody>
-        <tfoot class="footer_data">
+        <tfoot class="footer_data" style="background-color: #f39c12; color: white;">
             <tr>
-                <th colspan="8" class="text-right">Total:</th>
-                <th class="text-right"><?= number_format($total_taxable, 2) ?></th>
-                <th class="text-right"><?= number_format($total_tax, 2) ?></th>
-                <th class="text-right"><?= number_format($total_grand, 2) ?></th>
+                <th colspan="5" class="text-right">Total:</th>
+                <th class="text-right"><?= number_format($t_taxable, 2) ?></th>
+                <th class="text-right"><?= number_format($t_cgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_sgst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_igst, 2) ?></th>
+                <th class="text-right"><?= number_format($t_grand, 2) ?></th>
+                <th></th>
             </tr>
         </tfoot>
     </table>

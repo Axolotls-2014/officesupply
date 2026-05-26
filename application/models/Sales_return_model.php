@@ -136,6 +136,19 @@ class Sales_return_model extends CI_Model {
             return false;
         }
     }
+    
+    public function get_already_returned_qty($invoice_no, $product_id)
+{
+    $this->db->select_sum('sri.quantity');
+    $this->db->from('sales_return_items sri');
+    $this->db->join('sales_return sr', 'sr.id = sri.sales_return_id');
+    $this->db->where('sr.invoice_no', $invoice_no); // Original Sale Reference No
+    $this->db->where('sri.product_id', $product_id);
+    $this->db->where('sr.delete_status', 0);
+    $query = $this->db->get();
+    $result = $query->row();
+    return ($result && $result->quantity) ? (float)$result->quantity : 0;
+}
 
     public function get_records_by_sales_return_id($customer_id)
     {

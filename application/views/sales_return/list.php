@@ -99,8 +99,8 @@
                     <th><?=$this->lang->line('sales_return_date')?></th>
                     <th>Branch</th>
                     <th><?=$this->lang->line('sales_return_customer')?></th>
-                    <th><?="Taxable" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>
                     <th><?="Discount" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>
+                    <th><?="Taxable" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>
                     <th><?="GST" . ' (' . $this->session->userdata('currency_symbol') . ')'?></th>
                     <th><?=$this->lang->line('sales_return_total')?></th>
                     <th><?=$this->lang->line('paid')?></th>

@@ -218,6 +218,7 @@
 
 /* Specific width for selling price and cost */
 #product_table_body input[name="selling_price"],
+#product_table_body input[name="freight_selling_price"], /* Add this line */
 #product_table_body input[name="vendor_cost"] {
   width: 100px !important;
   min-width: 100px;
@@ -266,6 +267,14 @@
     padding-top: 15px !important;   /* same top padding */
     padding-bottom: 10px;           /* optional */
     vertical-align: top;            /* important for alignment */
+}
+
+#due_date_display {
+    background-color: #e9ecef; /* Standard gray for readonly fields */
+    cursor: not-allowed;        /* Shows the 'disabled' cursor */
+    color: #495057;
+    opacity: 1;
+    padding: 6px 12px;         /* Standard input padding */
 }
   </style>
   <div class="wrapper">
@@ -393,7 +402,7 @@
                         <option value="<?= $value->id; ?>" 
                                 data-ledger_id="<?= $value->ledger_id ?>" 
                                 <?= set_select('customer_id', $value->id); ?>>
-                            <?= !empty($value->customer_company_name) ? $value->customer_company_name : $value->customer_name; ?>
+                            <?= $value->customer_company_name; ?>
                         </option>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -443,7 +452,7 @@
                                         <select class="form-control form-control-sm select2bs4 field_validation" name="warehouse_id" id="warehouse_id" width="100%" placeholder="<?=$this->lang->line('purchase_warehouse')?>">
                                             <option value=""><?=$this->lang->line('select')?></option>
                                             <?php foreach ($warehouses as $value): ?>
-                                                <option value="<?=$value->id;?>" <?= ($value->id == set_value('warehouse_id')) ? 'selected' : ''; ?>>
+                                                <option value="<?=$value->id;?>" <?= ($value->id == set_value('warehouse_id')) ? 'selected' : ''; ?> selected>
                                                     <?= $value->name;?>
                                                 </option>
                                             <?php endforeach; ?>
@@ -957,35 +966,38 @@
                           </table>
                         </div>
 
-<table class="table table-striped table-bordered table-condensed table-hover total_data">
+<!--<table class="table table-striped table-bordered table-condensed table-hover total_data">-->
   <!-- Transport dropdown -->
-  <tr>
-    <td align="right" width="66%">
-      <select class="form-control" id="additional_cost_type" name="additional_cost_type">
-        <option value="">Select Transport</option>
-        <option value="internal">Internal</option>
-        <option value="external">External</option>
-      </select>
-    </td>
-  </tr>
+<!--  <tr>-->
+<!--    <td align="right" width="66%">-->
+<!--      <select class="form-control" id="additional_cost_type" name="additional_cost_type">-->
+<!--        <option value="">Select Transport</option>-->
+<!--        <option value="internal">Internal</option>-->
+<!--        <option value="external">External</option>-->
+<!--      </select>-->
+<!--    </td>-->
+<!--     <td width="34%">-->
+<!--         <input type="number" class="form-control form-control-sm" id="additional_cost_amount" placeholder="Enter Amount" step="any">-->
+<!--     </td>-->
+<!--  </tr>-->
 
   <!-- Total Taxable Value (excluding Freight) -->
-  <tr>
-    <td align="right" width="66%">Total Taxable Value (₹)</td>
-    <td align='right' class="text-success" width="34%">
-      +<span id="total_taxable_value">0.00</span>
-      <input type="hidden" name="total_taxable_value" id="t_taxable_value" value="0">
-    </td>
-  </tr>
+<!--  <tr>-->
+<!--    <td align="right" width="66%">Total Taxable Value (₹)</td>-->
+<!--    <td align='right' class="text-success" width="34%">-->
+<!--      +<span id="total_taxable_value">0.00</span>-->
+<!--      <input type="hidden" name="total_taxable_value" id="t_taxable_value" value="0">-->
+<!--    </td>-->
+<!--  </tr>-->
 
   <!-- Product Tax Only -->
-  <tr>
-    <td align="right" width="66%">Total Product Tax (₹)</td>
-    <td align='right' class="text-success" width="34%">
-      +<span id="total_tax">0.00</span>
-      <input type="hidden" name="total_tax" id="t_tax" value="0">
-    </td>
-  </tr>
+<!--  <tr>-->
+<!--    <td align="right" width="66%">Total Product Tax (₹)</td>-->
+<!--    <td align='right' class="text-success" width="34%">-->
+<!--      +<span id="total_tax">0.00</span>-->
+<!--      <input type="hidden" name="total_tax" id="t_tax" value="0">-->
+<!--    </td>-->
+<!--  </tr>-->
 
   <!-- Freight GST (always shown separately) -->
   <!--<tr>-->
@@ -997,20 +1009,74 @@
   <!--</tr>-->
 
   <!-- Final Total -->
+<!--  <tr>-->
+<!--    <td align="right" width="66%">Total (₹)</td>-->
+<!--    <td align='right' width="34%">-->
+<!--      <span id="total">0.00</span>-->
+<!--      <input type="hidden" name="total" id="t" value="0">-->
+<!--    </td>-->
+<!--  </tr>-->
+
+  <!-- Credit -->
+<!--  <tr>-->
+<!--    <td align="right" width="66%">Available Credit (₹)</td>-->
+<!--    <td align='right' width="34%">-->
+<!--      <span id="available_credit">0.00</span>-->
+<!--      <input type="hidden" name="available_credit" value="0">-->
+<!--    </td>-->
+<!--  </tr>-->
+<!--</table>-->
+<table class="table table-striped table-bordered table-condensed table-hover total_data">
+  <!-- Transport Selection -->
   <tr>
-    <td align="right" width="66%">Total (₹)</td>
-    <td align='right' width="34%">
-      <span id="total">0.00</span>
-      <input type="hidden" name="total" id="t" value="0">
+    <td align="right" width="66%">
+      <select class="form-control" id="additional_cost_type" name="additional_cost_type">
+        <option value="">Select Transport</option>
+        <option value="internal">Internal</option>
+        <option value="external">External</option>
+      </select>
+    </td>
+    <td width="34%">
+      <input type="number" class="form-control form-control-sm" id="additional_cost_amount" placeholder="Enter Amount" step="any">
     </td>
   </tr>
 
-  <!-- Credit -->
+  <!-- Product Sub Total -->
   <tr>
-    <td align="right" width="66%">Available Credit (₹)</td>
-    <td align='right' width="34%">
-      <span id="available_credit">0.00</span>
-      <input type="hidden" name="available_credit" value="0">
+    <td align="right">Sub Total (Excl. Tax) (₹)</td>
+    <td align='right'>
+      <span id="product_sub_total">0.00</span>
+      <input type="hidden" name="total_taxable_value" id="t_taxable_value">
+    </td>
+  </tr>
+
+  <!-- Product Tax -->
+  <tr>
+    <td align="right">Tax (₹)</td>
+    <td align='right'>
+      <span id="product_tax_total">0.00</span>
+      <input type="hidden" name="total_tax" id="t_tax">
+    </td>
+  </tr>
+
+  <!-- Freight Taxable (Only shown if transport selected) -->
+  <tr id="freight_taxable_row" style="display:none;">
+    <td align="right">Freight Charges (₹)</td>
+    <td align='right'><span id="freight_taxable_display">0.00</span></td>
+  </tr>
+
+  <!-- Freight Tax (Only shown if External) -->
+  <tr id="freight_tax_row" style="display:none;">
+    <td align="right">Freight Tax (18%) (₹)</td>
+    <td align='right'><span id="freight_tax_amt_display">0.00</span></td>
+  </tr>
+
+  <!-- Final Grand Total -->
+  <tr>
+    <td align="right" class="total_data">Grand Total (Incl. Tax) (₹)</td>
+    <td align='right' class="total_data">
+      <span id="total">0.00</span>
+      <input type="hidden" name="total" id="t" value="0">
     </td>
   </tr>
 </table>
@@ -1567,6 +1633,7 @@ $('#default_due_days').change(function(){
       // Service search code begin
 
       var c_mapping = { };
+      var item_id_map = { }; // Add this line here
 
 $(function(){
     $('#search_product').autoComplete({
@@ -1589,8 +1656,20 @@ $(function(){
                 success: function(data){
                     var products = data;
                     var suggestions = [];
+                    // for(var i = 0; i < products.length; ++i) {
+                    //     suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
+                    //     c_mapping[products[i].warehouse_products_id] = products[i].name;
+                    // }
+                    // Find this inside success: function(data)
                     for(var i = 0; i < products.length; ++i) {
-                        suggestions.push(products[i].warehouse_products_id+' - '+products[i].name+' - '+products[i].product_category_name+' - '+products[i].price);
+                        // 1. Build the text WITHOUT the ID at the start
+                        var display_text = products[i].name + ' - ' + products[i].product_category_name + ' - ' + products[i].price;
+                        
+                        // 2. Add only the clean text to the dropdown UI
+                        suggestions.push(display_text);
+                        
+                        // 3. Link that specific text back to its hidden ID in our map
+                        item_id_map[display_text] = products[i].warehouse_products_id;
                         c_mapping[products[i].warehouse_products_id] = products[i].name;
                     }
 
@@ -1610,7 +1689,8 @@ $(function(){
         onSelect: function(event, ui) {
             var str = ui.split(' - ');
             
-            var warehouse_products_id = str[0];
+            // var warehouse_products_id = str[0];
+            var warehouse_products_id = item_id_map[ui]; 
 
             $.ajax({
                 url: "<?php echo base_url('product/get_record_detail') ?>",
@@ -2458,7 +2538,129 @@ function add_row(data, vendors) {
         });
 
 
+// function calculateRow(row) {
+//   var tax_type = row.find('input[name^="tax_type"]').val();
+//   var customer_country_id = $('#customer_country_id').val();
+//   var customer_state_id = $('#customer_state_id').val();
+//   var company_country_id = $('#company_country_id').val();
+//   var company_state_id = $('#company_state_id').val();
+
+//   var quantity = parseFloat(row.find('input[name^="quantity"]').val()) || 0;
+//   var selling_price = parseFloat(row.find('input[name^="selling_price"]').val()) || 0;
+//   var discount_type = row.find('input[name^="discount_type"]').val();
+//   var discount_value = parseFloat(row.find('input[name^="discount_value"]').val()) || 0;
+
+//   var taxable_value = quantity * selling_price;
+//   var final_discount_value = 0;
+
+//   if (discount_type == 0) {
+//     final_discount_value = discount_value;
+//   } else {
+//     final_discount_value = (taxable_value * discount_value) / 100;
+//   }
+
+//   taxable_value = taxable_value - final_discount_value;
+
+//   // Initialize tax rates from the product data
+//   var igst = parseFloat(row.find('input[name^="igst"]').val()) || 0;
+//   var cgst = parseFloat(row.find('input[name^="cgst"]').val()) || 0;
+//   var sgst = parseFloat(row.find('input[name^="sgst"]').val()) || 0;
+//   console.log('igst',igst);
+//   console.log('cgst',cgst);
+//   console.log('sgst',sgst);
+//   // Determine which taxes to apply based on location
+//   var apply_igst = false;
+//   var apply_cgst_sgst = false;
+  
+//   if (company_country_id == customer_country_id) {
+//     if (company_state_id == customer_state_id) {
+//       // Same state - apply CGST+SGST
+//       apply_cgst_sgst = true;
+//       igst = 0; // Reset IGST if it was set
+//     } else {
+//       // Different state - apply IGST
+//       apply_igst = true;
+//       cgst = 0; // Reset CGST if it was set
+//       sgst = 0; // Reset SGST if it was set
+//     }
+//   } else {
+//     // Different country - no GST
+//     igst = 0;
+//     cgst = 0;
+//     sgst = 0;
+//   }
+//   row.data('apply_igst', apply_igst);
+//   row.data('apply_cgst_sgst', apply_cgst_sgst);
+  
+//   var igst_tax = 0, cgst_tax = 0, sgst_tax = 0;
+
+//   if (tax_type == 0) {
+//     // Exclusive tax
+//     if (apply_igst) {
+//       igst_tax = (taxable_value * igst) / 100;
+//     } else if (apply_cgst_sgst) {
+//       cgst_tax = (taxable_value * cgst) / 100;
+//       sgst_tax = (taxable_value * sgst) / 100;
+//     }
+//   } else {
+//     // Inclusive tax
+//     var total_tax_rate = igst + cgst + sgst;
+//     var total_tax_amount = (taxable_value * total_tax_rate) / (100 + total_tax_rate);
+
+//     if (apply_igst) {
+//       igst_tax = total_tax_amount;
+//     } else if (apply_cgst_sgst) {
+//       cgst_tax = total_tax_amount / 2;
+//       sgst_tax = total_tax_amount / 2;
+//     }
+
+//     taxable_value = taxable_value - (igst_tax + cgst_tax + sgst_tax);
+//   }
+
+//   var sub_total = taxable_value + igst_tax + cgst_tax + sgst_tax;
+
+//   // Update row values
+//   row.find('input[name^="igst_tax"]').val(igst_tax.toFixed(2));
+//   row.find('input[name^="cgst_tax"]').val(cgst_tax.toFixed(2));
+//   row.find('input[name^="sgst_tax"]').val(sgst_tax.toFixed(2));
+
+//   row.find('span[name^="i_tax"]').text(igst_tax.toFixed(2));
+//   row.find('span[name^="c_tax"]').text(cgst_tax.toFixed(2));
+//   row.find('span[name^="s_tax"]').text(sgst_tax.toFixed(2));
+
+//   // Only update the displayed tax rates if they're actually being applied
+//   row.find('span[name^="igst"]').text(apply_igst ? igst.toFixed(2) : "0");
+//   row.find('span[name^="cgst"]').text(apply_cgst_sgst ? cgst.toFixed(2) : "0");
+//   row.find('span[name^="sgst"]').text(apply_cgst_sgst ? sgst.toFixed(2) : "0");
+
+//   row.find('span[name^="discount_amount"]').text(final_discount_value.toFixed(2));
+//   row.find('span[name^="taxable_value"]').text(taxable_value.toFixed(2));
+//   row.find('span[name^="sub_total"]').text(sub_total.toFixed(2));
+
+//   // Rest of your existing code for purchase cost calculations...
+//   var cost = parseFloat(row.find('input[name="vendor_cost"]').val()) || 0;
+//   var purchase_igst = igst;
+//   var purchase_cgst = cgst;
+//   var purchase_sgst = sgst;
+
+//   var purchase_gst_percent = purchase_igst + purchase_cgst + purchase_sgst;
+//   var purchase_cost_with_gst = (cost + ((cost * purchase_gst_percent) / 100)) * quantity;
+//   row.find('input[name="vendor_total_with_gst[]"]').val(purchase_cost_with_gst.toFixed(2));
+//   var purchase_tax_amount = (purchase_cost_with_gst - (cost * quantity));
+
+//   row.find('span[name="purchase_gst_amount"]').text(purchase_tax_amount.toFixed(2));
+//   row.find('span[name="purchase_gst_percent"]').text(purchase_gst_percent.toFixed(2) + '%');
+
+//   var rowProfit = (selling_price * quantity) - purchase_cost_with_gst;
+//   row.find('span[name="row_profit"]').text(rowProfit.toFixed(2));
+
+//   // Final update for total
+//   updateProfitTotals();
+// }
+
 function calculateRow(row) {
+  if (row.find('input[name="freight_id"]').val() === 'freight') return; 
+
   var tax_type = row.find('input[name^="tax_type"]').val();
   var customer_country_id = $('#customer_country_id').val();
   var customer_state_id = $('#customer_state_id').val();
@@ -2481,41 +2683,32 @@ function calculateRow(row) {
 
   taxable_value = taxable_value - final_discount_value;
 
-  // Initialize tax rates from the product data
   var igst = parseFloat(row.find('input[name^="igst"]').val()) || 0;
   var cgst = parseFloat(row.find('input[name^="cgst"]').val()) || 0;
   var sgst = parseFloat(row.find('input[name^="sgst"]').val()) || 0;
-  console.log('igst',igst);
-  console.log('cgst',cgst);
-  console.log('sgst',sgst);
-  // Determine which taxes to apply based on location
+
   var apply_igst = false;
   var apply_cgst_sgst = false;
   
   if (company_country_id == customer_country_id) {
     if (company_state_id == customer_state_id) {
-      // Same state - apply CGST+SGST
       apply_cgst_sgst = true;
-      igst = 0; // Reset IGST if it was set
+      igst = 0;
     } else {
-      // Different state - apply IGST
       apply_igst = true;
-      cgst = 0; // Reset CGST if it was set
-      sgst = 0; // Reset SGST if it was set
+      cgst = 0;
+      sgst = 0;
     }
   } else {
-    // Different country - no GST
-    igst = 0;
-    cgst = 0;
-    sgst = 0;
+    igst = 0; cgst = 0; sgst = 0;
   }
+
   row.data('apply_igst', apply_igst);
   row.data('apply_cgst_sgst', apply_cgst_sgst);
   
   var igst_tax = 0, cgst_tax = 0, sgst_tax = 0;
 
   if (tax_type == 0) {
-    // Exclusive tax
     if (apply_igst) {
       igst_tax = (taxable_value * igst) / 100;
     } else if (apply_cgst_sgst) {
@@ -2523,61 +2716,43 @@ function calculateRow(row) {
       sgst_tax = (taxable_value * sgst) / 100;
     }
   } else {
-    // Inclusive tax
     var total_tax_rate = igst + cgst + sgst;
     var total_tax_amount = (taxable_value * total_tax_rate) / (100 + total_tax_rate);
-
     if (apply_igst) {
       igst_tax = total_tax_amount;
     } else if (apply_cgst_sgst) {
       cgst_tax = total_tax_amount / 2;
       sgst_tax = total_tax_amount / 2;
     }
-
     taxable_value = taxable_value - (igst_tax + cgst_tax + sgst_tax);
   }
 
   var sub_total = taxable_value + igst_tax + cgst_tax + sgst_tax;
 
-  // Update row values
+  // Update DOM
   row.find('input[name^="igst_tax"]').val(igst_tax.toFixed(2));
   row.find('input[name^="cgst_tax"]').val(cgst_tax.toFixed(2));
   row.find('input[name^="sgst_tax"]').val(sgst_tax.toFixed(2));
-
   row.find('span[name^="i_tax"]').text(igst_tax.toFixed(2));
   row.find('span[name^="c_tax"]').text(cgst_tax.toFixed(2));
   row.find('span[name^="s_tax"]').text(sgst_tax.toFixed(2));
-
-  // Only update the displayed tax rates if they're actually being applied
   row.find('span[name^="igst"]').text(apply_igst ? igst.toFixed(2) : "0");
   row.find('span[name^="cgst"]').text(apply_cgst_sgst ? cgst.toFixed(2) : "0");
   row.find('span[name^="sgst"]').text(apply_cgst_sgst ? sgst.toFixed(2) : "0");
-
   row.find('span[name^="discount_amount"]').text(final_discount_value.toFixed(2));
   row.find('span[name^="taxable_value"]').text(taxable_value.toFixed(2));
   row.find('span[name^="sub_total"]').text(sub_total.toFixed(2));
 
-  // Rest of your existing code for purchase cost calculations...
+  // Purchase cost logic
   var cost = parseFloat(row.find('input[name="vendor_cost"]').val()) || 0;
-  var purchase_igst = igst;
-  var purchase_cgst = cgst;
-  var purchase_sgst = sgst;
-
-  var purchase_gst_percent = purchase_igst + purchase_cgst + purchase_sgst;
+  var purchase_gst_percent = igst + cgst + sgst;
   var purchase_cost_with_gst = (cost + ((cost * purchase_gst_percent) / 100)) * quantity;
   row.find('input[name="vendor_total_with_gst[]"]').val(purchase_cost_with_gst.toFixed(2));
-  var purchase_tax_amount = (purchase_cost_with_gst - (cost * quantity));
-
-  row.find('span[name="purchase_gst_amount"]').text(purchase_tax_amount.toFixed(2));
-  row.find('span[name="purchase_gst_percent"]').text(purchase_gst_percent.toFixed(2) + '%');
-
-  var rowProfit = (selling_price * quantity) - purchase_cost_with_gst;
-  row.find('span[name="row_profit"]').text(rowProfit.toFixed(2));
-
-  // Final update for total
+  
+  // ✅ IMPORTANT: Trigger total refreshes
   updateProfitTotals();
+  calculateGrandTotal(); 
 }
-
 
 function updateProfitTotals() {
     var totalPurchaseCost = 0;
@@ -2587,32 +2762,63 @@ function updateProfitTotals() {
     var transportType = $('#additional_cost_type').val();
     var freightSubTotal = 0;
 
-    $("#product_table_body").find('tr').each(function () {
+    // $("#product_table_body").find('tr').each(function () {
+    //     var row = $(this);
+    //     var isFreight = row.find('input[name="freight_id"]').val() === 'freight';
+        
+    //     if (isFreight) {
+    //         var freightAmount = parseFloat(row.find('input[name="freight_selling_price"]').val()) || 0;
+    //         var freightTax = parseFloat(row.find('span[name="freight_i_tax"]').text()) || 0;
+    //         freightSubTotal = parseFloat(row.find('span[name="freight_sub_total"]').text()) || 0;
+
+    //         if (transportType === 'internal') {
+    //             // Internal transport - add to purchase cost only
+    //             totalPurchaseCost += freightAmount;
+    //         } else {
+    //             // External transport - add to taxable and tax
+    //             totalTaxableValue += freightAmount;
+    //             totalTax += freightTax;
+    //             totalSellingPrice += freightSubTotal;
+    //         }
+    //     } else {
+    //         // Handle product rows normally
+    //         var vendorWithGst = parseFloat(row.find('input[name="vendor_total_with_gst[]"]').val()) || 0;
+    //         totalPurchaseCost += vendorWithGst;
+
+    //         var subTotal = parseFloat(row.find('span[name="sub_total"]').text()) || 0;
+    //         totalSellingPrice += subTotal;
+            
+    //         totalTaxableValue += parseFloat(row.find('span[name="taxable_value"]').text()) || 0;
+    //         totalTax += (parseFloat(row.find('span[name="i_tax"]').text()) || 0)
+    //                   + (parseFloat(row.find('span[name="c_tax"]').text()) || 0)
+    //                   + (parseFloat(row.find('span[name="s_tax"]').text()) || 0);
+    //     }
+    // });
+    
+     $("#product_table_body").find('tr').each(function () {
         var row = $(this);
         var isFreight = row.find('input[name="freight_id"]').val() === 'freight';
         
         if (isFreight) {
             var freightAmount = parseFloat(row.find('input[name="freight_selling_price"]').val()) || 0;
-            var freightTax = parseFloat(row.find('span[name="freight_i_tax"]').text()) || 0;
-            freightSubTotal = parseFloat(row.find('span[name="freight_sub_total"]').text()) || 0;
+            var freightTax = parseFloat(row.find('span[name="i_tax"]').text()) || 0; // Fixed selector
+            freightSubTotal = parseFloat(row.find('span[name="sub_total"]').text()) || 0; // Fixed selector
+            
+            // FIX: Always add to invoice totals regardless of type
+            totalTaxableValue += freightAmount;
+            totalTax += freightTax;
+            totalSellingPrice += freightSubTotal;
 
             if (transportType === 'internal') {
-                // Internal transport - add to purchase cost only
+                // Also treat it as a purchase expense for profit margin
                 totalPurchaseCost += freightAmount;
-            } else {
-                // External transport - add to taxable and tax
-                totalTaxableValue += freightAmount;
-                totalTax += freightTax;
-                totalSellingPrice += freightSubTotal;
             }
         } else {
-            // Handle product rows normally
+            // Handle regular product rows
             var vendorWithGst = parseFloat(row.find('input[name="vendor_total_with_gst[]"]').val()) || 0;
             totalPurchaseCost += vendorWithGst;
 
-            var subTotal = parseFloat(row.find('span[name="sub_total"]').text()) || 0;
-            totalSellingPrice += subTotal;
-            
+            totalSellingPrice += parseFloat(row.find('span[name="sub_total"]').text()) || 0;
             totalTaxableValue += parseFloat(row.find('span[name="taxable_value"]').text()) || 0;
             totalTax += (parseFloat(row.find('span[name="i_tax"]').text()) || 0)
                       + (parseFloat(row.find('span[name="c_tax"]').text()) || 0)
@@ -2651,33 +2857,129 @@ function updateProfitTotals() {
     };
 }
 
-function calculateGrandTotal() {
-    var total_taxable_value = 0.0;
-    var total_cgst = 0.0;
-    var total_sgst = 0.0;
-    var total_igst = 0.0;
-    var total = 0.0;
-    var total_discount = 0.0;
-    var tds = parseFloat($('#tds').val());
+// function calculateGrandTotal() {
+//     var total_taxable_value = 0.0;
+//     var total_cgst = 0.0;
+//     var total_sgst = 0.0;
+//     var total_igst = 0.0;
+//     var total = 0.0;
+//     var total_discount = 0.0;
+//     var tds = parseFloat($('#tds').val());
 
-    $("#product_table_body").find('tr').each(function () {
-        var tr = $(this).closest("tr");
-        total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text());
-        total_discount += parseFloat(tr.find('span[name^="discount_amount"]').text());
-        total_cgst += parseFloat(tr.find('span[name^="c_tax"]').text());
-        total_sgst += parseFloat(tr.find('span[name^="s_tax"]').text());
-        total_igst += parseFloat(tr.find('span[name^="i_tax"]').text());
-        total += parseFloat(tr.find('span[name^="sub_total"]').text());
+//     $("#product_table_body").find('tr').each(function () {
+//         var tr = $(this).closest("tr");
+//         total_taxable_value += parseFloat(tr.find('span[name^="taxable_value"]').text());
+//         total_discount += parseFloat(tr.find('span[name^="discount_amount"]').text());
+//         total_cgst += parseFloat(tr.find('span[name^="c_tax"]').text());
+//         total_sgst += parseFloat(tr.find('span[name^="s_tax"]').text());
+//         total_igst += parseFloat(tr.find('span[name^="i_tax"]').text());
+//         total += parseFloat(tr.find('span[name^="sub_total"]').text());
+//     });
+
+//     $('#total_taxable_value').text(parseFloat(total_taxable_value.toFixed(2)) - tds);
+//     $('#t_taxable_value').val(parseFloat(total_taxable_value.toFixed(2)) - tds);
+//     $('#total_discount').text(total_discount.toFixed(2));
+//     $('#t_discount').val(total_discount.toFixed(2));
+//     $('#total_tax').text((total_cgst + total_sgst + total_igst).toFixed(2));
+//     $('#t_tax').val((total_cgst + total_sgst + total_igst).toFixed(2));
+//     $('#total').text(total.toFixed(2));
+//     $('#t').val(total.toFixed(2));
+// }
+
+// function calculateGrandTotal() {
+//     var total_taxable_value = 0.0;
+//     var total_cgst = 0.0;
+//     var total_sgst = 0.0;
+//     var total_igst = 0.0;
+//     var total = 0.0;
+//     var total_discount = 0.0;
+    
+//     // Safety check for TDS: if field doesn't exist, use 0
+//     var tds = parseFloat($('#tds').val()) || 0;
+
+//     $("#product_table_body tr").each(function () {
+//         var tr = $(this);
+        
+//         // Use || 0 to ensure we never add "undefined" or "NaN"
+//         total_taxable_value += parseFloat(tr.find('span[name="taxable_value"]').text()) || 0;
+//         total_discount      += parseFloat(tr.find('span[name="discount_amount"]').text()) || 0;
+//         total_cgst          += parseFloat(tr.find('span[name="c_tax"]').text()) || 0;
+//         total_sgst          += parseFloat(tr.find('span[name="s_tax"]').text()) || 0;
+//         total_igst          += parseFloat(tr.find('span[name="i_tax"]').text()) || 0;
+//         total               += parseFloat(tr.find('span[name="sub_total"]').text()) || 0;
+//     });
+
+//     var grand_tax = total_cgst + total_sgst + total_igst;
+//     var final_taxable = total_taxable_value - tds;
+
+//     // Update UI
+//     $('#total_taxable_value').text(final_taxable.toFixed(2));
+//     $('#t_taxable_value').val(final_taxable.toFixed(2));
+    
+//     $('#total_tax').text(grand_tax.toFixed(2));
+//     $('#t_tax').val(grand_tax.toFixed(2));
+    
+//     $('#total').text(total.toFixed(2));
+//     $('#t').val(total.toFixed(2));
+    
+//     $('#total_discount').text(total_discount.toFixed(2));
+//     $('#t_discount').val(total_discount.toFixed(2));
+// }
+
+function calculateGrandTotal() {
+    var product_taxable = 0.0;
+    var product_tax = 0.0;
+    var freight_taxable = 0.0;
+    var freight_tax = 0.0;
+    var grand_total = 0.0;
+    
+    var transport_type = $('#additional_cost_type').val();
+
+    $("#product_table_body tr").each(function () {
+        var tr = $(this);
+        var isFreight = tr.find('input[name="freight_id"]').val() === 'freight';
+        
+        var taxable = parseFloat(tr.find('span[name="taxable_value"]').text()) || 0;
+        var tax = (parseFloat(tr.find('span[name="c_tax"]').text()) || 0) + 
+                  (parseFloat(tr.find('span[name="s_tax"]').text()) || 0) + 
+                  (parseFloat(tr.find('span[name="i_tax"]').text()) || 0);
+
+        if (isFreight) {
+            freight_taxable = taxable;
+            freight_tax = tax;
+        } else {
+            product_taxable += taxable;
+            product_tax += tax;
+        }
     });
 
-    $('#total_taxable_value').text(parseFloat(total_taxable_value.toFixed(2)) - tds);
-    $('#t_taxable_value').val(parseFloat(total_taxable_value.toFixed(2)) - tds);
-    $('#total_discount').text(total_discount.toFixed(2));
-    $('#t_discount').val(total_discount.toFixed(2));
-    $('#total_tax').text((total_cgst + total_sgst + total_igst).toFixed(2));
-    $('#t_tax').val((total_cgst + total_sgst + total_igst).toFixed(2));
-    $('#total').text(total.toFixed(2));
-    $('#t').val(total.toFixed(2));
+    // Update UI Spans
+    $('#product_sub_total').text(product_taxable.toFixed(2));
+    $('#product_tax_total').text(product_tax.toFixed(2));
+    
+    // Handle Freight Display Rows
+    if(transport_type != '') {
+        $('#freight_taxable_row').show();
+        $('#freight_taxable_display').text(freight_taxable.toFixed(2));
+        
+        if(transport_type == 'external') {
+            $('#freight_tax_row').show();
+            $('#freight_tax_amt_display').text(freight_tax.toFixed(2));
+        } else {
+            $('#freight_tax_row').hide();
+        }
+    } else {
+        $('#freight_taxable_row, #freight_tax_row').hide();
+    }
+
+    // Final Calculations
+    grand_total = product_taxable + product_tax + freight_taxable + freight_tax;
+
+    // Update Hidden inputs for form submission
+    $('#t_taxable_value').val((product_taxable + freight_taxable).toFixed(2)); // Combined for DB
+    $('#t_tax').val((product_tax + freight_tax).toFixed(2));
+    $('#total').text(grand_total.toFixed(2));
+    $('#t').val(grand_total.toFixed(2));
 }
 
 
@@ -2804,13 +3106,24 @@ $('#addSaleForm').submit(function(e) {
     };
 
     // Check if freight row exists and get values
+    // $(".freight-row").each(function() {
+    //     freightData = {
+    //         'freight_selling_price': parseFloat($(this).find('input[name="freight_selling_price"]').val()) || 0,
+    //         'freight_taxable_value': parseFloat($(this).find('span[name="freight_taxable_value"]').text()) || 0,
+    //         'freight_sub_total': parseFloat($(this).find('span[name="freight_sub_total"]').text()) || 0,
+    //         'freight_tax_rate': parseFloat($(this).find('input[name="freight_tax_rate"]').val()) || 0,
+    //         'freight_tax_amount': parseFloat($(this).find('span[name="freight_i_tax"]').text()) || 0
+    //     };
+    // });
+    
     $(".freight-row").each(function() {
-        freightData = {
-            'freight_selling_price': parseFloat($(this).find('input[name="freight_selling_price"]').val()) || 0,
-            'freight_taxable_value': parseFloat($(this).find('span[name="freight_taxable_value"]').text()) || 0,
-            'freight_sub_total': parseFloat($(this).find('span[name="freight_sub_total"]').text()) || 0,
+    freightData = {
+        'freight_selling_price': parseFloat($(this).find('input[name="freight_selling_price"]').val()) || 0,
+        // We use the new span names here so they aren't 0
+            'freight_taxable_value': parseFloat($(this).find('span[name="taxable_value"]').text()) || 0,
+            'freight_sub_total': parseFloat($(this).find('span[name="sub_total"]').text()) || 0,
             'freight_tax_rate': parseFloat($(this).find('input[name="freight_tax_rate"]').val()) || 0,
-            'freight_tax_amount': parseFloat($(this).find('span[name="freight_i_tax"]').text()) || 0
+            'freight_tax_amount': parseFloat($(this).find('span[name="i_tax"]').text()) || 0
         };
     });
 
@@ -2995,7 +3308,8 @@ $('#addSaleForm').submit(function(e) {
                     
                     for(i=0;i<response['customers'].length;i++)
                     { 
-                      $('#customer_id').append('<option value="' + response['customers'][i].id + '">' + response['customers'][i].customer_name+'-'+response['customers'][i].phone+'</option>');
+                    //   $('#customer_id').append('<option value="' + response['customers'][i].id + '">' + response['customers'][i].customer_name+'-'+response['customers'][i].phone+'</option>');
+                  $('#customer_id').append('<option value="' + response['customers'][i].id + '">' + response['customers'][i].customer_name+'</option>');
                     }
 
                     $('#customer_id').val(response['id']).attr("selected","selected");  
@@ -3327,62 +3641,126 @@ $(document).on('change', '#upload_document', function(e) {
       });
       
 
-        
+// function addFreightRow(type, amount = 0) {
+//     if ($('.freight-row').length > 0) return;
+
+//     let taxRate = (type === 'external') ?  0 : 0;
+//     let taxAmount = (amount * taxRate) / 100;
+//     let subTotal = amount + taxAmount;
+
+//     let newRow = $('<tr class="service_row freight-row">');
+//     let cols = "";
+
+//     cols += '<td><span class="delete_item"><i class="fas fa-minus-circle text-danger"></i></span>'
+//           + '<input type="hidden" name="freight_id" value="freight"></td>';
+//     cols += '<td><b>Freight Charges (' + type + ')</b></td>';
+//     cols += '<td>Transport</td>';
+//     cols += '<td></td>'; 
+//     cols += '<td><input type="hidden" name="quantity" value="1">1</td>';
+
+//     // TABLE INPUT: Users can type here
+//     cols += '<td>'
+//           + '<input type="number" class="form-control text-right freight-row-amount" name="freight_selling_price" value="' + amount + '" step="any">'
+//           + '</td>';
+
+//     cols += '<td>NA</td>';
+//     cols += '<td>NA</td>'; 
+//     cols += '<td><span name="taxable_value">' + amount.toFixed(2) + '</span></td>';
+
+//     // Tax logic
+//     if (type === 'external') {
+//         cols += '<td class="tax_td">IGST(18%): <span name="i_tax">' + taxAmount.toFixed(2) + '</span>'
+//               + '<span name="c_tax" style="display:none">0</span>'
+//               + '<span name="s_tax" style="display:none">0</span></td>';
+//     } else {
+//         cols += '<td class="tax_td">N/A'
+//               + '<span name="i_tax" style="display:none">0</span>'
+//               + '<span name="c_tax" style="display:none">0</span>'
+//               + '<span name="s_tax" style="display:none">0</span></td>';
+//     }
+
+//     cols += '<td><span name="sub_total">' + subTotal.toFixed(2) + '</span></td>';
+
+//     newRow.append(cols);
+//     $("#product_table_body").append(newRow);
+    
+//     calculateGrandTotal();
+//     updateProfitTotals();
+// }
+
 function addFreightRow(type, amount = 0) {
-    // If freight row already exists, don't add it again
     if ($('.freight-row').length > 0) return;
 
-    let taxRate = (type === 'external') ? 18 : 0;
-    let taxableValue = amount;
-    let taxAmount = 0;
-    let subTotal = amount;
-
-    if (type === 'external' && amount > 0) {
-        taxAmount = (amount * taxRate) / 100;
-        subTotal = amount + taxAmount; // Include GST in subtotal
-    }
+    // View logic: External usually has 18% GST
+    let taxRate = (type === 'external') ? 0 : 0;
+    let taxAmount = (amount * taxRate) / 100;
+    let subTotal = amount + taxAmount;
 
     let newRow = $('<tr class="service_row freight-row">');
     let cols = "";
 
-    cols += '<td>'
-              + '<span class="delete_item"><i class="fas fa-minus-circle text-danger"></i></span>'
-              + '<input type="hidden" name="freight_id" value="freight">'
-              + '<input type="hidden" name="freight_type" value="' + type + '">'
-              + '<input type="hidden" name="freight_tax_rate" value="' + taxRate + '">'
-            +'</td>';
-
-    cols += '<td><span name="freight_name">Freight Charges (' + type + ')</span></td>';
-    cols += '<td><span name="freight_remark">Transport charges</span></td>';
-    cols += '<td></td>'; // Vendor
-    cols += '<td>0.00</td>'; // Purchase cost
-    cols += '<td><input type="number" class="form-control" name="freight_quantity" value="1" min="1" readonly></td>';
+    cols += '<td><span class="delete_item"><i class="fas fa-minus-circle text-danger"></i></span>'
+          + '<input type="hidden" name="freight_id" value="freight"></td>';
+    cols += '<td><b>Freight Charges (' + type + ')</b></td>';
+    cols += '<td>Transport</td>';
+    cols += '<td></td>'; 
+    cols += '<td><input type="hidden" name="quantity" value="1">1</td>';
 
     cols += '<td>'
-              + '<input type="number" class="form-control text-right freight-amount" name="freight_selling_price" value="' + amount.toFixed(2) + '" data-freight-type="' + type + '">'
-            + '</td>';
+          + '<input type="number" class="form-control text-right freight-row-amount" name="freight_selling_price" value="' + amount + '" step="any">'
+          + '</td>';
 
-   
-    cols += '<td class="d-none"></td>'; // Discount
+    cols += '<td>NA</td>'; // HSN
     cols += '<td>NA</td>'; // UOM
-    cols += '<td>NA</td>'; // UOM
-    cols += '<td><span name="freight_taxable_value">' + taxableValue.toFixed(2) + '</span></td>';
+    cols += '<td><span name="taxable_value">' + amount.toFixed(2) + '</span></td>';
 
     if (type === 'external') {
-        cols += '<td class="tax_td">IGST : <span name="freight_i_tax">' + taxAmount.toFixed(2) + '</span> (<span name="freight_igst">' + taxRate + '%</span>)</td>';
+        cols += '<td class="tax_td">IGST (18%): <span name="i_tax">' + taxAmount.toFixed(2) + '</span>'
+              + '<span name="c_tax" style="display:none">0</span>'
+              + '<span name="s_tax" style="display:none">0</span>'
+              + '<input type="hidden" name="igst_rate" value="18">'
+              + '<input type="hidden" name="cgst_rate" value="0">'
+              + '<input type="hidden" name="sgst_rate" value="0"></td>';
     } else {
-        cols += '<td class="tax_td">N/A</td>';
+        cols += '<td class="tax_td">N/A'
+              + '<span name="i_tax" style="display:none">0</span>'
+              + '<span name="c_tax" style="display:none">0</span>'
+              + '<span name="s_tax" style="display:none">0</span>'
+              + '<input type="hidden" name="igst_rate" value="0">'
+              + '<input type="hidden" name="cgst_rate" value="0">'
+              + '<input type="hidden" name="sgst_rate" value="0"></td>';
     }
 
-    cols += '<td><span name="freight_sub_total">' + subTotal.toFixed(2) + '</span></td>';
+    cols += '<td><span name="sub_total">' + subTotal.toFixed(2) + '</span></td>';
 
     newRow.append(cols);
-    $("table.product_table tbody#product_table_body").append(newRow);
+    $("#product_table_body").append(newRow);
+    
+    calculateGrandTotal();
 }
 
+function refreshFreightCalculations(amount) {
+    let type = $('#additional_cost_type').val();
+    let row = $('.freight-row');
+    if (row.length === 0) return;
+
+    let taxRate = (type === 'external') ?  0 : 0;
+    let taxAmount = (amount * taxRate) / 100;
+    let subTotal = amount + taxAmount;
+
+    // Update the display spans only (DO NOT TOUCH THE INPUTS HERE)
+    row.find('span[name="taxable_value"]').text(amount.toFixed(2));
+    if (type === 'external') {
+        row.find('span[name="i_tax"]').text(taxAmount.toFixed(2));
+    }
+    row.find('span[name="sub_total"]').text(subTotal.toFixed(2));
+
+    calculateGrandTotal();
+    updateProfitTotals();
+}
 
 function updateFreightValues(type, amount) {
-    let taxRate = (type === 'external') ? 18 : 0;
+    let taxRate = (type === 'external') ? 0 : 0;
     let taxableValue = amount;
     let taxAmount = 0;
     let subTotal = amount;
@@ -3393,42 +3771,58 @@ function updateFreightValues(type, amount) {
     }
 
     let row = $('.freight-row');
-    row.find('span[name="freight_taxable_value"]').text(taxableValue.toFixed(2));
-    row.find('input[name="freight_taxable_value"]').val(taxableValue.toFixed(2));
-
-    row.find('input[name="freight_tax_rate"]').val(taxRate);
+    // Updated selectors to find name="taxable_value" instead of name="freight_taxable_value"
+    row.find('span[name="taxable_value"]').text(taxableValue.toFixed(2));
     row.find('input[name="freight_selling_price"]').val(amount.toFixed(2));
 
     if (type === 'external') {
-        row.find('.tax_td').html('IGST : <span name="freight_i_tax">' + taxAmount.toFixed(2) + '</span> (18%)');
+        row.find('.tax_td').html('IGST : <span name="i_tax">' + taxAmount.toFixed(2) + '</span> (18%)'
+              + '<span name="c_tax" style="display:none">0</span>'
+              + '<span name="s_tax" style="display:none">0</span>'
+              + '<span name="discount_amount" style="display:none">0</span>');
     } else {
-        row.find('.tax_td').html('N/A');
+        row.find('.tax_td').html('N/A'
+              + '<span name="i_tax" style="display:none">0</span>'
+              + '<span name="c_tax" style="display:none">0</span>'
+              + '<span name="s_tax" style="display:none">0</span>'
+              + '<span name="discount_amount" style="display:none">0</span>');
     }
 
-    row.find('span[name="freight_sub_total"]').text(subTotal.toFixed(2));
+    row.find('span[name="sub_total"]').text(subTotal.toFixed(2));
 
+    // IMPORTANT: Call both functions to refresh UI
+    calculateGrandTotal();
     updateProfitTotals();
 }
 
 // On change of cost type dropdown
 $('#additional_cost_type').change(function () {
     let type = $(this).val();
-    if (!type) return;
-
-    // Always add row if not exists
-    addFreightRow(type);
-
-    // If there's amount, update the values
-    let currentAmount = parseFloat($('#additional_cost_amount').val()) || 0;
-    updateFreightValues(type, currentAmount);
+    let amount = parseFloat($('#additional_cost_amount').val()) || 0;
+    
+    if (type) {
+        if ($('.freight-row').length === 0) {
+            addFreightRow(type, amount);
+        } else {
+            // Update existing row label and recalculate
+            $('.freight-row b').text('Freight Charges (' + type + ')');
+            refreshFreightCalculations(amount);
+        }
+    } else {
+        $('.freight-row').remove();
+        calculateGrandTotal();
+        updateProfitTotals();
+    }
 });
 
-$('#additional_cost_amount').on('input', function () {
-    let amount = parseFloat($(this).val()) || 0;
-    let type = $('#additional_cost_type').val();
-    if (type) {
-        updateFreightValues(type, amount);
-    }
+$('#additional_cost_amount').on('input', function() {
+    let amountStr = $(this).val();
+    let amountNum = parseFloat(amountStr) || 0;
+    
+    // Update the table row input value (without formatting to prevent cursor jump)
+    $('.freight-row-amount').val(amountStr);
+    
+    refreshFreightCalculations(amountNum);
 });
 
 $(document).on('input', '.freight-amount', function () {
@@ -3437,11 +3831,25 @@ $(document).on('input', '.freight-amount', function () {
     updateFreightValues(type, newAmount);
 });
 
-$('table.product_table').on('click', "span.delete_item", function(e){
+$(document).on('input', '.freight-row-amount', function() {
+    let amountStr = $(this).val();
+    let amountNum = parseFloat(amountStr) || 0;
+    
+    // Update the footer input value (without formatting to prevent cursor jump)
+    $('#additional_cost_amount').val(amountStr);
+    
+    refreshFreightCalculations(amountNum);
+});
+
+$('table.product_table').on('click', "span.delete_item", function(e) {
     var tr = $(this).closest('tr');
+    if (tr.hasClass('freight-row')) {
+        $('#additional_cost_type').val('');
+        $('#additional_cost_amount').val('');
+    }
     tr.remove();
     calculateGrandTotal();
-    updateProfitTotals(); // Add this line
+    updateProfitTotals();
 });
 
 

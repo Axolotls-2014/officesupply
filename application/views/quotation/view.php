@@ -112,6 +112,11 @@ footer {
         padding: 5px 6px;
     }
 }
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
 </style>
 
 <div class="wrapper">
@@ -132,7 +137,7 @@ footer {
     <section class="content">
       <div class="row">
         <div class="col-12">
-          <div class="card">
+          <div class="card no-print">
             <div class="card-header">
               <h3 class="card-title">Shortcuts</h3>
             </div>
@@ -192,7 +197,7 @@ footer {
           </div>
           
           <div class="card">
-            <div class="card-header">
+            <div class="card-header no-print">
               <h3 class="card-title"><?=$this->lang->line('quotation_view')?></h3>
               <div class="card-tools">
                 <?php 
@@ -310,7 +315,7 @@ footer {
                                             <td>HSN</td>
                                             <td>UOM</td>
                                             <td>Qty</td>
-                                            <td class="no-print">Purchase Cost</td>
+                                            <!--<td class="no-print">Purchase Cost</td>-->
                                             <td>Selling Price</td>
                                             <td>Taxable Value</td>
                                             <td>Tax (Rate)</td>
@@ -339,7 +344,7 @@ footer {
                                             <td><?= $row->hsn; ?></td>
                                             <td><?= $row->uom_uom; ?></td>
                                             <td><?= $row->quantity; ?></td>
-                                            <td class="no-print">₹ <?= number_format_i($row->purchase_cost); ?></td>
+                                            <!--<td class="no-print">₹ <?= number_format_i($row->purchase_cost); ?></td>-->
                                             <td>₹ <?= number_format_i($row->price); ?></td>
                                             <td>₹ <?= number_format_i($row->taxable_value); ?></td>
                                             <td>₹ <?= number_format_i($tax_amount); ?> (<?= $tax_rate ?>%)</td>
@@ -395,26 +400,26 @@ footer {
                                     $profit_margin = ($quotation->total_purchase_cost > 0) ? ($gross_profit_loss / $quotation->total_purchase_cost) * 100 : 0;
                                     ?>
                                     <?php if ($sale->total_purchase_cost > 0 || $total_selling_price > 0): ?>
-                                        <table class="no-print">
-                                            <tr class="heading"><td colspan="4"><strong>Profit/Loss Summary</strong></td></tr>
-                                            <tr class="details">
-                                                <td colspan="2"><strong>Purchase Cost:</strong></td>
-                                                <td colspan="2" style="text-align: right;">₹ <?= number_format_i($quotation->total_purchase_cost); ?></td>
-                                            </tr>
+                                        <!--<table class="no-print">-->
+                                        <!--    <tr class="heading"><td colspan="4"><strong>Profit/Loss Summary</strong></td></tr>-->
+                                        <!--    <tr class="details">-->
+                                        <!--        <td colspan="2"><strong>Purchase Cost:</strong></td>-->
+                                        <!--        <td colspan="2" style="text-align: right;">₹ <?= number_format_i($quotation->total_purchase_cost); ?></td>-->
+                                        <!--    </tr>-->
                                           
-                                            <tr class="details">
-                                                <td colspan="2"><strong>Selling Price:</strong></td>
-                                                <td colspan="2" style="text-align: right;">₹ <?= number_format_i($total_selling_price); ?></td>
-                                            </tr>
-                                            <tr class="details">
-                                                <td colspan="2"><strong>Gross <?= $gross_profit_loss >= 0 ? 'Profit' : 'Loss'; ?>:</strong></td>
-                                                <td colspan="2" style="text-align: right; color:<?= $gross_profit_loss >= 0 ? 'green' : 'red' ?>;">₹ <?= number_format_i($gross_profit_loss); ?></td>
-                                            </tr>
-                                            <tr class="details">
-                                                <td colspan="2"><strong>Profit Margin:</strong></td>
-                                                <td colspan="2" style="text-align: right; color:<?= $profit_margin >= 0 ? 'green' : 'red' ?>;"><?= number_format_i($profit_margin, 2); ?>%</td>
-                                            </tr>
-                                        </table>
+                                        <!--    <tr class="details">-->
+                                        <!--        <td colspan="2"><strong>Selling Price:</strong></td>-->
+                                        <!--        <td colspan="2" style="text-align: right;">₹ <?= number_format_i($total_selling_price); ?></td>-->
+                                        <!--    </tr>-->
+                                        <!--    <tr class="details">-->
+                                        <!--        <td colspan="2"><strong>Gross <?= $gross_profit_loss >= 0 ? 'Profit' : 'Loss'; ?>:</strong></td>-->
+                                        <!--        <td colspan="2" style="text-align: right; color:<?= $gross_profit_loss >= 0 ? 'green' : 'red' ?>;">₹ <?= number_format_i($gross_profit_loss); ?></td>-->
+                                        <!--    </tr>-->
+                                        <!--    <tr class="details">-->
+                                        <!--        <td colspan="2"><strong>Profit Margin:</strong></td>-->
+                                        <!--        <td colspan="2" style="text-align: right; color:<?= $profit_margin >= 0 ? 'green' : 'red' ?>;"><?= number_format_i($profit_margin, 2); ?>%</td>-->
+                                        <!--    </tr>-->
+                                        <!--</table>-->
                                     
                                     <?php endif; ?>                                    
                                     

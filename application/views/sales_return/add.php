@@ -119,7 +119,7 @@
                       <div class="col-sm-2">
                         <div class="form-group">
                           <label><?=$this->lang->line('sales_return_reference_no')?></label>
-                          <input type="text" class="form-control" id="reference_no" name="reference_no" disabled="">
+                          <input type="text" class="form-control" id="reference_no" name="reference_no" value="<?php echo $reference_no; ?>" readonly>
                         </div>
                       </div>
                       
@@ -144,7 +144,8 @@
                                 <option value="<?=$s->reference_no?>"
                                       data-sale_id="<?=$s->id?>"
                                 >
-                                  <?=$s->reference_no.' - '.$cust->customer_name?>
+                                  <!--<?=$s->reference_no.' - '.$cust->customer_name?>-->
+                                      <?=$s->reference_no.' - '.$cust->customer_company_name?>
                                 </option>
                             <?php
                               }
@@ -225,11 +226,18 @@
 
     <option value=""><?= $this->lang->line('select') ?></option>
 
-    <?php if(!empty($customers)): ?>
-        <?php foreach ($customers as $value): ?>
-            <option value="<?= $value->id; ?>" data-ledger_id="<?= $value->ledger_id ?>" <?= set_select('customer_id', $value->id); ?>>
-                <?= $value->customer_name; ?>
-            </option>
+    <!--<?php if(!empty($customers)): ?>-->
+    <!--    <?php foreach ($customers as $value): ?>-->
+    <!--        <option value="<?= $value->id; ?>" data-ledger_id="<?= $value->ledger_id ?>" <?= set_select('customer_id', $value->id); ?>>-->
+    <!--            <?= $value->customer_name; ?>-->
+    <!--        </option>-->
+    <!--    <?php endforeach; ?>-->
+    <!--<?php endif; ?>-->
+    
+    <?php if(!empty($customer)): ?>
+        <?php foreach ($customer as $value): ?>
+            <!--<option value="<?= $value->id; ?>"><?= $value->customer_name; ?></option>-->
+            <option value="<?= $value->id; ?>"><?= $value->customer_company_name; ?></option>
         <?php endforeach; ?>
     <?php endif; ?>
 </select>
@@ -296,16 +304,19 @@
                       <div class="col-sm-12">
                         <div class="form-group">
                           <label><?=$this->lang->line('sales_return_items')?></label>
-                          <table class="table items table-striped table-bordered table-condensed table-hover product_table" name="product_data" id="product_data">
+                          <!--<table class="table items table-striped table-bordered table-condensed table-hover product_table" name="product_data" id="product_data">-->
+                            <table class="table items table-striped table-bordered table-condensed table-hover product_table" 
+                               name="product_data" id="product_data" 
+                               style="table-layout: fixed; width: 100%;">
                             <thead>
                               <tr>
-                                <th width="2%">
+                                <th width="4%">
                                   <img src="<?php  echo base_url(); ?>assets/images/bin1.png" />
                                 </th>
                                 <th class="span2" width="15%"><?=$this->lang->line('product_description')?></th>
                                 <th class="span2" width="8%"><?=$this->lang->line('sales_return_qty')?></th>
                                 <th class="span2 <?= (empty($promotion) || $promotion->field_status !== 'active') ? 'd-none' : '' ?>" width="10%"><?=$this->lang->line('proforma_invoice_free_qty')?></th>
-                                <th class="span2" width="10%"><?=$this->lang->line('sales_return_price')?></th>
+                                <th class="span2" width="12%"><?=$this->lang->line('sales_return_price')?></th>
                                 <th class="span2" width="10%"><?=$this->lang->line('proforma_invoice_batch')?></th>
                                 <th class="span2 <?= (empty($mfg_date) || $mfg_date->field_status !== 'active') ? 'd-none' : '' ?>" width="10%">
                                   <?= $this->lang->line('product_mfg_date') ?>
@@ -314,11 +325,10 @@
                                   <?= $this->lang->line('product_expiry_date') ?>
                                 </th>
                                 <th class="span2" width="14%"><?=$this->lang->line('sales_return_discount')?></th>
-                                <th class="span2" width="11%"><?=$this->lang->line('sales_return_uom')?></th>
+                                <th class="span2" width="8%"><?=$this->lang->line('sales_return_uom')?></th>
                                 <th class="span2" width="8%"><?=$this->lang->line('sales_return_taxable_value')?></th>
-                                <th class="span2" width="12%"><?=$this->lang->line('sales_return_tax')?></th>
-                                <th class="span2" width="5%"><?=$this->lang->line('sales_return_inclusive')?></th>
-                                <th class="span2" width="7%"><?=$this->lang->line('sales_return_total')?></th>
+                                <th class="span2" width="13%"><?=$this->lang->line('sales_return_tax')?></th>
+                                <th class="span2" width="10%"><?=$this->lang->line('sales_return_total')?></th>
                               </tr>
                             </thead>
                             <tbody id="product_table_body">
@@ -732,8 +742,9 @@
 
         /************    tax type begin   *****************/
 
+        // var tax_type  = '<input type="hidden" name="tax_type" value="'+product.tax_type+'">';
+        // tax_type      += (product.tax_type == 0) ? "No" : "Yes";
         var tax_type  = '<input type="hidden" name="tax_type" value="'+product.tax_type+'">';
-        tax_type      += (product.tax_type == 0) ? "No" : "Yes";
 
         /************    tax type end   *****************/
 
@@ -774,9 +785,9 @@
             cols += '<td>'+select_discount+'</td>';
             cols += '<td>'+input_uom+'</td>';
             cols += '<td>'+taxable_value+'</td>';
-            cols += '<td>'+tax+'</td>';
-           
-            cols += '<td>'+tax_type+'</td>';
+            // cols += '<td>'+tax+'</td>';
+           cols += '<td>' + tax + tax_type + '</td>';
+            // cols += '<td>'+tax_type+'</td>';
             cols += '<td><span name="sub_total"></span></td>';
             cols += '</tr>';
 
@@ -1259,7 +1270,8 @@
 
         var sale_id      = $('#invoice_no').find('option:selected').data('sale_id');
 
-     
+         console.log("DEBUG: Invoice selected: " + reference_no); // LOG 1
+
         $('#sale_id').val(sale_id);
 
         if(reference_no != '')
@@ -1273,19 +1285,38 @@
               '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
             },
             success: function(data){
+             console.log("DEBUG: Data received from server:", data); // LOG 2
+            //   if(data.code == 1)
+            //   {
+            //     $('#reference_invoice_no').text('invoice no is not available');
+            //   }
+            //   else
+            //   {
+            //     var sale    = data.sale;
+            //     $('#reference_invoice_no').html('<a href=""  data-toggle="modal" data-tt="tooltip" data-target="#view_sale_detail_modal" data-sale_id="'+sale.id+'" id="open_view_sale_detail_modal">Click here to show details of Sale</a>');
+            //     $('#customer_id').val(sale.customer_id).trigger('change');
+            //     $('#warehouse_id').val(sale.warehouse_id).trigger('change');
+            //     $('#open_view_sale_detail_modal').trigger('click');
+            //   }
+            
+             if (data.sale) {
+                    var sale = data.sale;
+                    // $('#reference_no').val(sale.reference_no); 
 
-              if(data.code == 1)
-              {
-                $('#reference_invoice_no').text('invoice no is not available');
-              }
-              else
-              {
-                var sale    = data.sale;
-                $('#reference_invoice_no').html('<a href=""  data-toggle="modal" data-tt="tooltip" data-target="#view_sale_detail_modal" data-sale_id="'+sale.id+'" id="open_view_sale_detail_modal">Click here to show details of Sale</a>');
-                $('#customer_id').val(sale.customer_id).trigger('change');
-                $('#warehouse_id').val(sale.warehouse_id).trigger('change');
-                $('#open_view_sale_detail_modal').trigger('click');
-              }
+                    // 1. Auto-select Branch & Trigger Update
+                    $('#warehouse_id').val(sale.warehouse_id).trigger('change');
+                    
+                    // 2. Auto-select Customer & Trigger Update
+                    $('#customer_id').val(sale.customer_id).trigger('change');
+                    
+                    // 3. Update the text link for details
+                    $('#reference_invoice_no').html('<a href="javascript:void(0)" data-toggle="modal" data-target="#view_sale_detail_modal" data-sale_id="' + sale.id + '" id="open_view_sale_detail_modal">Click here to select items from Sale</a>');
+                    
+                    // 4. Automatically open the product selection modal
+                    setTimeout(function() {
+                        $('#open_view_sale_detail_modal').trigger('click');
+                    }, 500);
+                }
             }
           });
         }
@@ -1341,71 +1372,117 @@
       });
 
 
-      $('#view_sale_detail_modal').on('hide.bs.modal', function (e) {
-        var existing_product_array = new Array();
+    //   $('#view_sale_detail_modal').on('hide.bs.modal', function (e) {
+    //     var existing_product_array = new Array();
 
-        $("#existing_sale_items").find('tr').each(function () {
-          var tr  = $(this).closest("tr");
+    //     $("#existing_sale_items").find('tr').each(function () {
+    //       var tr  = $(this).closest("tr");
 
-          if(tr.find('.checkbox').is(':checked'))
-          {
-            var warehouse_product_id  = tr.find('input[name="warehouse_product_id"]').val();
-            var return_quantity       = tr.find('input[name="return_quantity"]').val();
-            var sold_quantity         = tr.find('input[name="sold_quantity"]').val();
-            var product_name          = tr.find('input[name="product_name"]').val();
-            var description           = tr.find('input[name="description"]').val();
-            var cost                    = tr.find('input[name="cost"]').val();
-            var selling_price           = tr.find('input[name="selling_price"]').val();
-            var price                   = tr.find('input[name="price"]').val();
+    //       if(tr.find('.checkbox').is(':checked'))
+    //       {
+    //         var warehouse_product_id  = tr.find('input[name="warehouse_product_id"]').val();
+    //         var return_quantity       = tr.find('input[name="return_quantity"]').val();
+    //         var sold_quantity         = tr.find('input[name="sold_quantity"]').val();
+    //         var product_name          = tr.find('input[name="product_name"]').val();
+    //         var description           = tr.find('input[name="description"]').val();
+    //         var cost                    = tr.find('input[name="cost"]').val();
+    //         var selling_price           = tr.find('input[name="selling_price"]').val();
+    //         var price                   = tr.find('input[name="price"]').val();
 
-            var free_quantity           = tr.find('input[name="free_quantity"]').val();
+    //         var free_quantity           = tr.find('input[name="free_quantity"]').val();
 
-            $.ajax({
-              url: "<?php echo base_url('product/get_record_detail') ?>",
-              type: "POST",
-              dataType: "json",
-              data:{
-                'product_id': warehouse_product_id, 
-                'module': '<?=SALE_RETURN_MODULE?>',
-                '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
-              },
-              success: function(data){
-                var product = data.product;
+    //         $.ajax({
+    //           url: "<?php echo base_url('product/get_record_detail') ?>",
+    //           type: "POST",
+    //           dataType: "json",
+    //           data:{
+    //             'product_id': warehouse_product_id, 
+    //             'module': '<?=SALE_RETURN_MODULE?>',
+    //             '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
+    //           },
+    //           success: function(data){
+    //             var product = data.product;
 
-                if(!is_product_exist_in_row(product.warehouse_products_id))
-                {
-                  add_row(data,sold_quantity,free_quantity,product_name,description,return_quantity,cost,price,selling_price);
-                }
-                else
-                {
-                  highlight_row(product.warehouse_products_id);
-                }
+    //             if(!is_product_exist_in_row(product.warehouse_products_id))
+    //             {
+    //               add_row(data,sold_quantity,free_quantity,product_name,description,return_quantity,cost,price,selling_price);
+    //             }
+    //             else
+    //             {
+    //               highlight_row(product.warehouse_products_id);
+    //             }
 
-                $('.datepicker').datepicker({
-                    weekStart: 1,
-                    daysOfWeekHighlighted: "6,0",
-                    autoclose: true,
-                    todayHighlight: true,
-                    format: 'dd-mm-yyyy'
-                });
+    //             $('.datepicker').datepicker({
+    //                 weekStart: 1,
+    //                 daysOfWeekHighlighted: "6,0",
+    //                 autoclose: true,
+    //                 todayHighlight: true,
+    //                 format: 'dd-mm-yyyy'
+    //             });
 
                 
-                $("#customer_id").closest('.row').siblings().fadeIn(10);
-                // $('#search_product').val('').focus();
-                calculateGrandTotal();
-              }
-            });  
-          }
-        });
-      });
+    //             $("#customer_id").closest('.row').siblings().fadeIn(10);
+    //             // $('#search_product').val('').focus();
+    //             calculateGrandTotal();
+    //           }
+    //         });  
+    //       }
+    //     });
+    //   });
 
-      // Submit Sales return items
+    //   // Submit Sales return items
 
-      $('#saleItemsReturnForm').submit(function(e){
+    //   $('#saleItemsReturnForm').submit(function(e){
+    //     e.preventDefault();
+    //     $('#view_sale_detail_modal').modal('hide');
+    //   });
+// Change your Submit handler to this:
+    $('#saleItemsReturnForm').submit(function(e){
         e.preventDefault();
+        
+        // Process the selected items ONLY when the user clicks SUBMIT
+        $("#existing_sale_items").find('tr').each(function () {
+            var tr = $(this).closest("tr");
+            var return_quantity = tr.find('input[name="return_quantity"]').val();
+    
+            // Check if checkbox is checked AND quantity is valid
+            if(tr.find('.checkbox').is(':checked') && return_quantity > 0)
+            {
+                var warehouse_product_id  = tr.find('input[name="warehouse_product_id"]').val();
+                var sold_quantity         = tr.find('input[name="sold_quantity"]').val();
+                var product_name          = tr.find('input[name="product_name"]').val();
+                var description           = tr.find('input[name="description"]').val();
+                var cost                  = tr.find('input[name="cost"]').val();
+                var selling_price         = tr.find('input[name="selling_price"]').val();
+                var price                 = tr.find('input[name="price"]').val();
+                var free_quantity         = tr.find('input[name="free_quantity"]').val();
+    
+                $.ajax({
+                    url: "<?php echo base_url('product/get_record_detail') ?>",
+                    type: "POST",
+                    dataType: "json",
+                    data:{
+                        'product_id': warehouse_product_id, 
+                        'module': '<?=SALE_RETURN_MODULE?>',
+                        '<?php echo $this->security->get_csrf_token_name(); ?>' : '<?php echo $this->security->get_csrf_hash(); ?>'
+                    },
+                    success: function(data){
+                        var product = data.product;
+                        if(!is_product_exist_in_row(product.warehouse_products_id)) {
+                            add_row(data,sold_quantity,free_quantity,product_name,description,return_quantity,cost,price,selling_price);
+                        } else {
+                            highlight_row(product.warehouse_products_id);
+                        }
+                        calculateGrandTotal();
+                        $("#customer_id").closest('.row').siblings().fadeIn(10);
+                    }
+                });  
+            }
+        });
+    
+        // Now hide the modal
         $('#view_sale_detail_modal').modal('hide');
-      });
-
+    });
       $(document).on('change', '#upload_document', function(e) {
         var allowedExtensions = ["pdf"];
         var files = this.files;

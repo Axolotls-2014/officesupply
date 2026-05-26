@@ -831,7 +831,7 @@ public function inventory_product_added_report($pid, $to_date = null, $from_date
 // }
 
 
-function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
+function sale_report2005($from_date, $to_date, $customer_id, $warehouse_id)
 {
     $this->db->select('
         s.invoice_date,
@@ -851,6 +851,8 @@ function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
     ');
     $this->db->from('sale_items si');
     $this->db->join('sale s', 's.id = si.sale_id');
+    $this->db->join('sale_delivery sd', 'sd.sale_id = s.id', 'inner');
+
     $this->db->join('customer c', 'c.id = s.customer_id', 'left');
     $this->db->join('warehouse w', 'w.id = s.warehouse_id', 'left');
     
@@ -865,6 +867,37 @@ function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
     return $this->db->get();
 }
 
+function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
+{
+    $this->db->select('
+        s.invoice_date,
+        s.reference_no as invoice_no,
+        s.id as sale_id,
+        c.customer_name,
+        c.customer_company_name,
+        c.gstin as gst_no,
+        s.total_taxable_value,
+        SUM(si.cgst_tax) as total_cgst,
+        SUM(si.sgst_tax) as total_sgst,
+        SUM(si.igst_tax) as total_igst,
+        s.total as total_amount,
+        s.delete_status
+    ');
+    $this->db->from('sale s');
+    $this->db->join('sale_items si', 'si.sale_id = s.id', 'left');
+    $this->db->join('customer c', 'c.id = s.customer_id', 'left');
+    
+    $this->db->where('s.delete_status', 0);
+
+    if ($from_date != '') $this->db->where('s.invoice_date >=', $from_date);
+    if ($to_date != '') $this->db->where('s.invoice_date <=', $to_date);
+    if ($customer_id != '') $this->db->where('s.customer_id', $customer_id);
+    if ($warehouse_id != '') $this->db->where('s.warehouse_id', $warehouse_id);
+
+    $this->db->group_by('s.id'); // 🔥 Grouping by Sale ID to show 1 row per invoice
+    $this->db->order_by('s.invoice_date', 'DESC');
+    return $this->db->get();
+}
 
 // function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
 // {
@@ -967,7 +1000,7 @@ function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
     //   return  $query;
     // }
 
-   function sales_return_report($from_date, $to_date, $warehouse_id, $customer_id)
+   function sales_return_report2005($from_date, $to_date, $warehouse_id, $customer_id)
 {
     $this->db->select('
         s.sales_return_date as date,
@@ -983,6 +1016,7 @@ function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
     ');
     $this->db->from('sales_return_items sri'); 
     $this->db->join('sales_return s', 's.id = sri.sales_return_id'); 
+    $this->db->join('sales_return_delivery srd', 'srd.sales_return_id = s.id', 'inner');
     $this->db->join('customer c', 'c.id = s.customer_id', 'left');
     $this->db->join('warehouse w', 'w.id = s.warehouse_id', 'left');
 
@@ -996,6 +1030,38 @@ function sale_report($from_date, $to_date, $customer_id, $warehouse_id)
     
     return $this->db->get();
 }
+
+function sales_return_report($from_date, $to_date, $warehouse_id, $customer_id)
+{
+    $this->db->select('
+        s.sales_return_date as invoice_date,
+        s.reference_no as invoice_no,
+        s.id as return_id,
+        c.customer_name,
+        c.customer_company_name,
+        c.gstin as gst_no,
+        s.total_taxable_value as taxable_amount,
+        SUM(sri.cgst_tax) as total_cgst,
+        SUM(sri.sgst_tax) as total_sgst,
+        SUM(sri.igst_tax) as total_igst,
+        s.total as total_amount
+    ');
+    $this->db->from('sales_return s');
+    $this->db->join('sales_return_items sri', 'sri.sales_return_id = s.id', 'left');
+    $this->db->join('customer c', 'c.id = s.customer_id', 'left');
+    
+    $this->db->where('s.delete_status', 0);
+
+    if ($from_date != '') $this->db->where('s.sales_return_date >=', $from_date);
+    if ($to_date != '') $this->db->where('s.sales_return_date <=', $to_date);
+    if ($customer_id != '') $this->db->where('s.customer_id', $customer_id);
+    if ($warehouse_id != '') $this->db->where('s.warehouse_id', $warehouse_id);
+
+    $this->db->group_by('s.id'); 
+    $this->db->order_by('s.sales_return_date', 'DESC');
+    return $this->db->get();
+}
+
 
     // Purchase report function
 
@@ -1184,7 +1250,7 @@ public function purchase_report($from_date = null, $to_date = null, $supplier_id
     //     return $this->db->get();
     // }
     
-    function purchase_return_report($from_date = null, $to_date = null, $supplier_id = null, $warehouse_id = null)
+    function purchase_return_report2005($from_date = null, $to_date = null, $supplier_id = null, $warehouse_id = null)
     {
         $this->db->select('
             p.purchase_return_date as date,
@@ -1231,6 +1297,55 @@ public function purchase_report($from_date = null, $to_date = null, $supplier_id
         $this->db->order_by('p.purchase_return_date', 'DESC');
         return $this->db->get();
     }
+    
+    function purchase_return_report($from_date = null, $to_date = null, $supplier_id = null, $warehouse_id = null)
+    {
+        // Use DISTINCT to ensure we don't double-count products if joined multiple times
+        $this->db->select('
+            p.purchase_return_date as date,
+            p.reference_no as invoice_no,
+            p.internal_note as remarks,
+            p.id as return_id,
+            sp.company_name as party_name,
+            w.name as branch_name,
+            GROUP_CONCAT(DISTINCT pri.product_name SEPARATOR ", ") as product_name,
+            SUM(DISTINCT pri.quantity) as qty,
+            p.total as amount
+        ');
+        $this->db->from('purchase_return p');
+        
+        // Link to items
+        $this->db->join('purchase_return_items pri', 'pri.purchase_return_id = p.id', 'left');
+        
+        // 🔥 THE FIX: We use a Subquery for delivery so it doesn't multiply the rows
+        $this->db->join("(SELECT DISTINCT purchase_return_id FROM purchase_return_delivery) as prd", 'prd.purchase_return_id = p.id', 'inner');
+        
+        $this->db->join('supplier sp', 'sp.id = p.supplier_id', 'left');
+        $this->db->join('warehouse w', 'w.id = p.warehouse_id', 'left');
+    
+        if (!empty($supplier_id)) {
+            $this->db->where('p.supplier_id', $supplier_id);
+        }
+        if (!empty($warehouse_id)) {
+            $this->db->where('p.warehouse_id', $warehouse_id);
+        }
+        if (!empty($from_date)) {
+            $this->db->where('p.purchase_return_date >=', $from_date);
+        }
+        if (!empty($to_date)) {
+            $this->db->where('p.purchase_return_date <=', $to_date);
+        }
+    
+        $this->db->where('p.delete_status', 0);
+        
+        // 🔥 FORCE GROUPING BY INVOICE NO
+        // This tells the database: "If the Invoice No is the same, merge them into one row"
+        $this->db->group_by('p.reference_no'); 
+        
+        $this->db->order_by('p.purchase_return_date', 'DESC');
+        return $this->db->get();
+    }
+
 
     // Expense report function
 
@@ -3277,7 +3392,7 @@ public function get_alert_qty($product_id = null)
     //     return (isset($res->balance)) ? (float)$res->balance : 0;
     // } 
     
-    public function get_stock_movements($from, $to, $pid = null, $warehouse_id = null) {
+    public function get_stock_movements1705($from, $to, $pid = null, $warehouse_id = null) {
     $where = " WHERE 1=1 ";
     if($pid && $pid != '') $where .= " AND m.product_id = " . $this->db->escape($pid);
     if($warehouse_id) $where .= " AND m.warehouse_id = " . $this->db->escape($warehouse_id);
@@ -3339,6 +3454,177 @@ public function get_alert_qty($product_id = null)
     return $this->db->query($sql)->result();
 }
 
+public function get_stock_movements2605($from, $to, $pid = null, $warehouse_id = null) {
+    $where = " WHERE 1=1 ";
+    if($pid && $pid != '') $where .= " AND m.product_id = " . $this->db->escape($pid);
+    if($warehouse_id) $where .= " AND m.warehouse_id = " . $this->db->escape($warehouse_id);
+
+    $sql = "
+        SELECT 
+            m.*, 
+            p.name AS product_name, 
+            p.pid AS product_pid, 
+            p.alert_quantity AS product_alert_limit,
+            COALESCE(w.name, 'Main Office') AS branch_name 
+        FROM (
+            /* Priority 1: Purchases (Establish stock and rate first) */
+            SELECT pur.purchase_date as date, 'Purchase' as type, pur.reference_no as ref_no, pi.product_id, pi.quantity as in_qty, 0 as out_qty, 
+            (p_inner.cost * pi.quantity) as pur_amt, 0 as sale_amt, pur.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 1 as priority, pi.id as source_id 
+            FROM purchase_items pi 
+            JOIN purchase pur ON pur.id = pi.purchase_id 
+            JOIN product p_inner ON p_inner.id = pi.product_id
+            INNER JOIN purchase_delivery pd ON pd.purchase_id = pur.id 
+            WHERE pur.delete_status = 0 GROUP BY pi.id
+            
+            UNION ALL
+
+            /* Priority 2: Manual Stock In */
+            SELECT DATE(created_date) as date, 'Stock In' as type, 'Manual' as ref_no, product_id, quantity as in_qty, 0 as out_qty, (quantity * product_cost) as pur_amt, 0 as sale_amt, warehouse_id, product_cost as tran_unit_cost, 2 as priority, id as source_id 
+            FROM stock 
+            WHERE delete_status = 0 AND entry_type = 'in'
+
+            UNION ALL
+
+            /* Priority 3: Sales Return */
+            SELECT 
+                srd.delivery_date as date, 
+                'Sales Return' as type, 
+                sr.reference_no as ref_no, 
+                srdi.product_id, 
+                srdi.quantity as in_qty, 
+                0 as out_qty, 
+                (srdi.cost * srdi.quantity) as pur_amt, 
+                0 as sale_amt, 
+                sr.warehouse_id, 
+                srdi.cost as tran_unit_cost, 
+                3 as priority, 
+                srdi.id as source_id 
+            FROM sales_return_delivery_items srdi 
+            JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+            JOIN sales_return sr ON sr.id = srd.sales_return_id 
+            WHERE sr.delete_status = 0
+
+            UNION ALL
+
+            /* Priority 4: Sales */
+            SELECT s.invoice_date as date, 'Sale' as type, s.reference_no as ref_no, si.product_id, 0 as in_qty, si.quantity as out_qty, 0 as pur_amt, si.sub_total as sale_amt, s.warehouse_id, 0 as tran_unit_cost, 4 as priority, si.id as source_id 
+            FROM sale_items si 
+            JOIN sale s ON s.id = si.sale_id 
+            INNER JOIN sale_delivery sd ON sd.sale_id = s.id 
+            WHERE s.delete_status = 0 GROUP BY si.id
+
+            UNION ALL
+
+            /* Priority 5: Purchase Returns */
+            SELECT prd.delivery_date as date, 'Purch Return' as type, pr.reference_no as ref_no, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, 0 as pur_amt, 0 as sale_amt, pr.warehouse_id, prdi.cost as tran_unit_cost, 5 as priority, prdi.id as source_id 
+            FROM purchase_return_delivery_items prdi 
+            JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+            JOIN purchase_return pr ON pr.id = prd.purchase_return_id 
+            WHERE pr.delete_status = 0
+
+            UNION ALL
+
+            /* Priority 6: Manual Stock Out */
+            SELECT DATE(created_date) as date, 'Stock Out' as type, 'Manual' as ref_no, product_id, 0 as in_qty, quantity as out_qty, 0 as pur_amt, 0 as sale_amt, warehouse_id, product_cost as tran_unit_cost, 6 as priority, id as source_id 
+            FROM stock 
+            WHERE delete_status = 0 AND entry_type = 'out'
+        ) as m
+        JOIN product p ON p.id = m.product_id
+        LEFT JOIN warehouse w ON w.id = m.warehouse_id 
+        $where
+        AND m.date BETWEEN '$from' AND '$to'
+        /* ORDER BY date, then Priority, then source ID for rock-solid sequence */
+        ORDER BY m.date ASC, m.priority ASC, m.source_id ASC";
+
+    return $this->db->query($sql)->result();
+}
+
+public function get_stock_movements($from, $to, $pid = null, $warehouse_id = null) {
+    $where = " WHERE 1=1 ";
+    if($pid && $pid != '') $where .= " AND m.product_id = " . $this->db->escape($pid);
+    if($warehouse_id) $where .= " AND m.warehouse_id = " . $this->db->escape($warehouse_id);
+
+    $sql = "
+        SELECT 
+            m.*, 
+            p.name AS product_name, 
+            p.pid AS product_pid, 
+            p.alert_quantity AS product_alert_limit,
+            COALESCE(w.name, 'Main Office') AS branch_name 
+        FROM (
+            /* Priority 1: Purchases */
+            SELECT pur.purchase_date as date, 'Purchase' as type, pur.reference_no as ref_no, pi.product_id, pi.quantity as in_qty, 0 as out_qty, 
+            (p_inner.cost * pi.quantity) as pur_amt, 0 as sale_amt, pur.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 1 as priority, pi.id as source_id 
+            FROM purchase_items pi 
+            JOIN purchase pur ON pur.id = pi.purchase_id 
+            JOIN product p_inner ON p_inner.id = pi.product_id
+            INNER JOIN purchase_delivery pd ON pd.purchase_id = pur.id 
+            WHERE pur.delete_status = 0 GROUP BY pi.id
+
+            UNION ALL
+
+            /* Priority 2: Manual Stock In */
+            SELECT DATE(s_inner.created_date) as date, 'Stock In' as type, 'Manual' as ref_no, s_inner.product_id, s_inner.quantity as in_qty, 0 as out_qty, 
+            (s_inner.quantity * p_inner.cost) as pur_amt, 0 as sale_amt, s_inner.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 2 as priority, s_inner.id as source_id 
+            FROM stock s_inner
+            JOIN product p_inner ON p_inner.id = s_inner.product_id
+            WHERE s_inner.delete_status = 0 AND s_inner.entry_type = 'in'
+
+            UNION ALL
+
+            /* Priority 3: Sales Return - FIX: Changed srd.delivery_date to sr.sales_return_date */
+            SELECT sr.sales_return_date as date, 'Sales Return' as type, sr.reference_no as ref_no, srdi.product_id, srdi.quantity as in_qty, 0 as out_qty, 
+            (p_inner.cost * srdi.quantity) as pur_amt, 0 as sale_amt, sr.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 3 as priority, srdi.id as source_id 
+            FROM sales_return_delivery_items srdi 
+            JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+            JOIN sales_return sr ON sr.id = srd.sales_return_id 
+            JOIN product p_inner ON p_inner.id = srdi.product_id
+            WHERE sr.delete_status = 0
+
+            UNION ALL
+
+            /* Priority 4: Sales */
+            SELECT s.invoice_date as date, 'Sale' as type, s.reference_no as ref_no, si.product_id, 0 as in_qty, si.quantity as out_qty, 0 as pur_amt, si.sub_total as sale_amt, s.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 4 as priority, si.id as source_id 
+            FROM sale_items si 
+            JOIN sale s ON s.id = si.sale_id 
+            JOIN product p_inner ON p_inner.id = si.product_id
+            INNER JOIN sale_delivery sd ON sd.sale_id = s.id 
+            WHERE s.delete_status = 0 GROUP BY si.id
+
+            UNION ALL
+
+            /* Priority 5: Purchase Returns - FIX: Changed prd.delivery_date to pr.purchase_return_date */
+            SELECT pr.purchase_return_date as date, 'Purch Return' as type, pr.reference_no as ref_no, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, 0 as pur_amt, 0 as sale_amt, pr.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 5 as priority, prdi.id as source_id 
+            FROM purchase_return_delivery_items prdi 
+            JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+            JOIN purchase_return pr ON pr.id = prd.purchase_return_id 
+            JOIN product p_inner ON p_inner.id = prdi.product_id
+            WHERE pr.delete_status = 0
+
+            UNION ALL
+
+            /* Priority 6: Manual Stock Out */
+            SELECT DATE(s_inner.created_date) as date, 'Stock Out' as type, 'Manual' as ref_no, s_inner.product_id, 0 as in_qty, s_inner.quantity as out_qty, 0 as pur_amt, 0 as sale_amt, s_inner.warehouse_id, 
+            p_inner.cost as tran_unit_cost, 6 as priority, s_inner.id as source_id 
+            FROM stock s_inner
+            JOIN product p_inner ON p_inner.id = s_inner.product_id
+            WHERE s_inner.delete_status = 0 AND s_inner.entry_type = 'out'
+        ) as m
+        JOIN product p ON p.id = m.product_id
+        LEFT JOIN warehouse w ON w.id = m.warehouse_id 
+        $where
+        AND m.date BETWEEN '$from' AND '$to'
+        ORDER BY m.date ASC, m.priority ASC, m.source_id ASC";
+
+    return $this->db->query($sql)->result();
+}
+
 public function get_opening_stock_before_date($date, $product_id, $warehouse_id = null) {
     $wh_query = "";
     if($warehouse_id) $wh_query = " AND warehouse_id = " . $this->db->escape($warehouse_id);
@@ -3351,7 +3637,12 @@ public function get_opening_stock_before_date($date, $product_id, $warehouse_id 
         UNION ALL
         SELECT CASE WHEN entry_type='in' THEN quantity ELSE 0 END, CASE WHEN entry_type='out' THEN quantity ELSE 0 END, warehouse_id, product_id, DATE(created_date) FROM stock WHERE delete_status = 0
         UNION ALL
-        SELECT sri.quantity, 0, sr.warehouse_id, sri.product_id, sr.sales_return_date FROM sales_return_items sri JOIN sales_return sr ON sr.id = sri.sales_return_id WHERE sr.delete_status = 0
+        /*SELECT sri.quantity, 0, sr.warehouse_id, sri.product_id, sr.sales_return_date FROM sales_return_items sri JOIN sales_return sr ON sr.id = sri.sales_return_id WHERE sr.delete_status = 0 */
+        SELECT srdi.quantity as in_qty, 0 as out_qty, sr.warehouse_id, srdi.product_id, srd.delivery_date as d 
+        FROM sales_return_delivery_items srdi 
+        JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+        JOIN sales_return sr ON sr.id = srd.sales_return_id 
+        WHERE sr.delete_status = 0
         UNION ALL
         SELECT 0, prdi.quantity, pr.warehouse_id, prdi.product_id, prd.delivery_date FROM purchase_return_delivery_items prdi JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
         UNION ALL

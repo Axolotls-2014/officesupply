@@ -184,7 +184,7 @@
         <?php endif; ?>
 
         <div class="signature">
-            <div><strong>For : OFFICE SUPPLY SOLUTIONS</strong></div>
+            <div><strong>For : OFFICE SUPPLY SOLUTIONS</strong></div> <br/>
             <div><strong>Authorise Signature</strong></div>
         </div>
     </div>

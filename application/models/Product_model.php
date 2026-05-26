@@ -338,7 +338,7 @@ class Product_model extends CI_Model {
     //     }
     // }
     
-    private function _get_datatables_query()
+    private function _get_datatables_query1405()
 {
     // 1. SELECT: We get everything from the view + master prices + tax type
     $this->db->select('pv.*, p.cost as master_cost, p.price as master_price, pc.tax_type, t.igst, t.cgst, t.sgst');
@@ -383,6 +383,7 @@ class Product_model extends CI_Model {
 
     // 8. DELETE STATUS
     $this->db->where('pv.delete_status', 0);    
+    $this->db->group_by('pv.id'); 
 
     // 9. SEARCH LOGIC (Adding pv. to prevent ambiguity)
     $i = 0;
@@ -417,7 +418,101 @@ class Product_model extends CI_Model {
         $this->db->order_by('pv.'.key($order), $order[key($order)]);
     }
 }
- 
+
+
+ private function _get_datatables_query()
+{
+    // 1. We start from the 'product' table (the catalog)
+    // This ensures that even products with NO warehouse info (like medirack) show up.
+    $this->db->select('
+        p.id, 
+        p.name, 
+        p.description, 
+        p.hsn, 
+        p.status, 
+        p.manage_inventory, 
+        p.product_code,
+        p.alert_quantity,
+        p.price as master_price, 
+        p.cost as master_cost, 
+        p.selling_price as master_selling_price,
+        pc.name as product_category_name, 
+        u.uom as uom_name, 
+        COALESCE(wp.quantity, 0) as quantity, 
+        COALESCE(wp.id, 0) as warehouse_product_id,
+        COALESCE(w.name, "Unassigned") as warehouse_name,
+        wp.warehouse_id,
+        wp.cost as product_cost,
+        wp.price as product_price,
+        wp.selling_price,
+        wp.batch_no,
+        t.igst
+    ');
+    $this->db->from('product p'); // Main table is product, not the view
+    
+    // 2. Use LEFT JOINs so we don't hide products with missing data
+    $this->db->join('product_category pc', 'pc.id = p.product_category_id', 'left');
+    $this->db->join('uom u', 'u.id = p.uom_id', 'left');
+    $this->db->join('warehouse_products wp', 'wp.product_id = p.id', 'left');
+    $this->db->join('warehouse w', 'w.id = wp.warehouse_id', 'left');
+    $this->db->join('tax t', 't.id = pc.tax_id', 'left');
+
+    // 3. WAREHOUSE FILTER
+    // If a branch is selected, show its stock. If no branch selected, show all.
+    if(isset($_POST['warehouse_id']) && $_POST['warehouse_id'] != ''){
+        $this->db->where('wp.warehouse_id', $_POST['warehouse_id']);     
+    }
+      
+    // 4. MANAGE INVENTORY FILTER
+    if(isset($_POST['manage_inventory']) && $_POST['manage_inventory'] != '')  
+        $this->db->where('p.manage_inventory', $_POST['manage_inventory']);     
+
+    // 5. QUANTITY FILTERS
+    if (isset($_POST['quantity'])) {
+        if ($_POST['quantity'] == QUANTITY_GREATER_THEN_ZERO) {
+            $this->db->where('wp.quantity >', 0);
+        } elseif ($_POST['quantity'] == QUANTITY_ZERO) {
+            // Include products with 0 stock OR products that don't even have a warehouse record yet
+            $this->db->group_start();
+                $this->db->where('wp.quantity', 0);
+                $this->db->or_where('wp.quantity IS NULL');
+            $this->db->group_end();
+        }
+    }
+
+    // 6. STATUS & DELETE FILTERS
+    $this->db->where('p.delete_status', 0); 
+        $this->db->group_by('p.id'); 
+
+    if(isset($_POST['product_status']) && $_POST['product_status'] != '') {
+        $this->db->where('p.status', $_POST['product_status']);
+    }
+
+    // 7. SEARCH LOGIC
+    $i = 0;
+    foreach ($this->column_search as $item) 
+    {
+        if(isset($_POST['search']['value']) && $_POST['search']['value']) 
+        {
+            if($i===0) {
+                $this->db->group_start(); 
+                $this->db->like('p.name', $_POST['search']['value']);
+            } else {
+                $this->db->or_like('p.description', $_POST['search']['value']);
+            }
+            if(count($this->column_search) - 1 == $i) $this->db->group_end(); 
+        }
+        $i++;
+    }
+     
+    // 8. ORDERING
+    if(isset($_POST['order'])) {
+        $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
+    } else {
+        $this->db->order_by('p.id', 'desc');
+    }
+}
+
     function get_datatables()
     {
         $this->_get_datatables_query();
@@ -523,7 +618,7 @@ class Product_model extends CI_Model {
 //                 return $this->db->query($sql)->result();
 //             }
 
-public function get_all_movements_ledger($target_date = null, $pid = null) {
+public function get_all_movements_ledger1305($target_date = null, $pid = null) {
     $this->db->query("SET SESSION sql_mode = ''");
     
     // We add 'trans_mrp' to the subquery to capture the price at the time of transaction
@@ -596,6 +691,101 @@ public function get_all_movements_ledger($target_date = null, $pid = null) {
     $sql .= " ORDER BY m.date ASC"; 
     return $this->db->query($sql)->result();
 }
+
+    public function get_all_movements_ledger1705($target_date = null, $pid = null) {
+        $this->db->query("SET SESSION sql_mode = ''");
+        
+        $sql = "SELECT m.*, p.name as p_name, p.pid as p_code, p.hsn as p_hsn, p.status as p_status, 
+                       p.alert_quantity as p_alert, u.uom as p_uom, 
+                       IF(m.trans_mrp > 0, m.trans_mrp, p.price) as p_mrp, p.cost as p_master_cost
+                FROM (
+                    /* 1. Manual Stock Entries from stock table (Stock In / Stock Out) */
+                    SELECT created_date as date, IF(entry_type='in', 'Stock In', 'Stock Out') as type, 'MANUAL' as ref, product_id, 
+                           IF(entry_type='in', quantity, 0) as in_qty, IF(entry_type='out', quantity, 0) as out_qty, 
+                           product_cost as pur_price, selling_price as sale_price, product_price as trans_mrp 
+                    FROM stock WHERE delete_status = 0
+    
+                    UNION ALL
+                    /* 2. Purchase - Delivered */
+                    SELECT pd.delivery_date as date, 'Purchase' as type, p.invoice_no as ref, pdi.product_id, pdi.quantity as in_qty, 0 as out_qty, pdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                    FROM purchase_delivery_items pdi JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id JOIN purchase p ON p.id = pd.purchase_id WHERE p.delete_status = 0
+    
+                    UNION ALL
+                    /* 3. Sale - Delivered */
+                    SELECT sd.delivery_date as date, 'Sale' as type, s.reference_no as ref, sdi.product_id, 0 as in_qty, sdi.quantity as out_qty, 0 as pur_price, sdi.selling_price as sale_price, 0 as trans_mrp 
+                    FROM sale_delivery_items sdi JOIN sale_delivery sd ON sd.id = sdi.sale_delivery_id JOIN sale s ON s.id = sd.sale_id WHERE s.delete_status = 0
+    
+                    UNION ALL
+                    /* 4. Purchase Return */
+                    SELECT prd.delivery_date as date, 'Pur. Return' as type, pr.reference_no as ref, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, prdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                    FROM purchase_return_delivery_items prdi JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
+                ) as m 
+                LEFT JOIN product p ON p.id = m.product_id 
+                LEFT JOIN uom u ON u.id = p.uom_id";
+    
+        $where = [];
+        if($target_date) $where[] = "DATE(m.date) <= " . $this->db->escape($target_date);
+        if($pid) $where[] = "m.product_id = " . $this->db->escape($pid);
+        
+        if(!empty($where)) $sql .= " WHERE " . implode(" AND ", $where);
+        $sql .= " ORDER BY m.date ASC"; 
+        return $this->db->query($sql)->result();
+    }
+    
+    public function get_all_movements_ledger($target_date = null, $pid = null) {
+        $this->db->query("SET SESSION sql_mode = ''");
+        
+        $sql = "SELECT m.*, p.name as p_name, p.pid as p_code, p.hsn as p_hsn, p.status as p_status, 
+                       p.alert_quantity as p_alert, u.uom as p_uom, 
+                       IF(m.trans_mrp > 0, m.trans_mrp, p.price) as p_mrp, p.cost as p_master_cost
+                FROM (
+                    /* 1. Manual Stock Entries (Stock In / Stock Out) */
+                    SELECT created_date as date, IF(entry_type='in', 'Stock In', 'Stock Out') as type, 'MANUAL' as ref, product_id, 
+                           IF(entry_type='in', quantity, 0) as in_qty, IF(entry_type='out', quantity, 0) as out_qty, 
+                           product_cost as pur_price, selling_price as sale_price, product_price as trans_mrp 
+                    FROM stock WHERE delete_status = 0
+    
+                    UNION ALL
+                    /* 2. Purchase - Delivered Stock */
+                    SELECT pd.delivery_date as date, 'Purchase' as type, p.invoice_no as ref, pdi.product_id, pdi.quantity as in_qty, 0 as out_qty, pdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                    FROM purchase_delivery_items pdi 
+                    JOIN purchase_delivery pd ON pd.id = pdi.purchase_delivery_id 
+                    JOIN purchase p ON p.id = pd.purchase_id WHERE p.delete_status = 0
+    
+                    UNION ALL
+                    /* 3. Sale - Delivered Stock (Stock Out) */
+                    SELECT sd.delivery_date as date, 'Sale' as type, s.reference_no as ref, sdi.product_id, 0 as in_qty, sdi.quantity as out_qty, 0 as pur_price, sdi.selling_price as sale_price, 0 as trans_mrp 
+                    FROM sale_delivery_items sdi 
+                    JOIN sale_delivery sd ON sd.id = sdi.sale_delivery_id 
+                    JOIN sale s ON s.id = sd.sale_id WHERE s.delete_status = 0
+    
+                    UNION ALL
+                    /* 4. Purchase Return (Stock Out) */
+                    SELECT prd.delivery_date as date, 'Pur. Return' as type, pr.reference_no as ref, prdi.product_id, 0 as in_qty, prdi.quantity as out_qty, prdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                    FROM purchase_return_delivery_items prdi 
+                    JOIN purchase_return_delivery prd ON prd.id = prdi.purchase_return_delivery_id 
+                    JOIN purchase_return pr ON pr.id = prd.purchase_return_id WHERE pr.delete_status = 0
+    
+                    UNION ALL
+                    /* 5. Sales Return - THIS WAS MISSING (Stock In) */
+                    SELECT srd.delivery_date as date, 'Sale Return' as type, sr.reference_no as ref, srdi.product_id, srdi.quantity as in_qty, 0 as out_qty, srdi.cost as pur_price, 0 as sale_price, 0 as trans_mrp 
+                    FROM sales_return_delivery_items srdi 
+                    JOIN sales_return_delivery srd ON srd.id = srdi.sales_return_delivery_id 
+                    JOIN sales_return sr ON sr.id = srd.sales_return_id 
+                    WHERE sr.delete_status = 0
+                ) as m 
+                LEFT JOIN product p ON p.id = m.product_id 
+                LEFT JOIN uom u ON u.id = p.uom_id";
+    
+        $where = [];
+        if($target_date) $where[] = "DATE(m.date) <= " . $this->db->escape($target_date);
+        if($pid) $where[] = "m.product_id = " . $this->db->escape($pid);
+        
+        if(!empty($where)) $sql .= " WHERE " . implode(" AND ", $where);
+        $sql .= " ORDER BY m.date ASC"; 
+        return $this->db->query($sql)->result();
+    }
+    
 
 }
 ?>
